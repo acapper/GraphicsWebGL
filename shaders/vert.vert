@@ -9,14 +9,17 @@ uniform mat4 world;
 uniform mat4 view;
 uniform mat4 proj;
 
-uniform mat4 nmatrix;
+uniform mat3 nmatrix;
 
 varying vec2 fTexture;
 varying vec3 fNormal;
+varying vec4 fPosition;
 
 void main()
 {
 	fTexture = texture;
-	fNormal =  (nmatrix * vec4(normal, 0.0)).xyz;
-	gl_Position = proj * view * world * model * vec4(position, 1.0);
+	fNormal =  (nmatrix * normal).xyz;
+	vec4 p = view * world * model * vec4(position, 1.0);
+	fPosition = p;	
+	gl_Position = proj * p;
 }

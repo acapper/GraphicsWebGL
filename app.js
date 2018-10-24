@@ -16,7 +16,7 @@ var Init = function() {
 	var image = loadImage('texture.png');
 	var vsText = loadTextResource('shaders/vert.vert');
 	var fsText = loadTextResource('shaders/frag.frag');
-	var model = loadJSONResource('models/lowpolydeer/deer.json');
+	var model = loadJSONResource('models/susan/susan.json');
 
 	return Promise.all([image, vsText, fsText, model]).then(
 		([imageR, vsTextR, fsTextR, modelR]) => {
@@ -193,9 +193,9 @@ var Run = function(texture, vsText, fsText, model) {
 
 	var nmatrixL = gl.getUniformLocation(program, 'nmatrix');
 
-	var ambientL = gl.getUniformLocation(program, 'ambient');
 	var lightL = gl.getUniformLocation(program, 'light');
 	var lightDirL = gl.getUniformLocation(program, 'lightDir');
+	var lightPosL = gl.getUniformLocation(program, 'lightPos');
 
 	var model = new Float32Array(16);
 	var world = new Float32Array(16);
@@ -204,7 +204,7 @@ var Run = function(texture, vsText, fsText, model) {
 
 	mat4.identity(model);
 	mat4.identity(world);
-	mat4.lookAt(view, [0, 0, -8], [0, 0, 0], [0, 1, 0]);
+	mat4.lookAt(view, [0, 0, -10], [0, 0, 0], [0, 1, 0]);
 	mat4.perspective(
 		proj,
 		glMatrix.toRadian(90),
@@ -213,11 +213,12 @@ var Run = function(texture, vsText, fsText, model) {
 		1000.0
 	);
 
-	var nmatrix = new Float32Array(16);
+	var nmatrix4 = new Float32Array(16);
+	var nmatrix3 = new Float32Array(9);
 
-	gl.uniform3f(ambientL, 0.2, 0.2, 0.2);
-	gl.uniform3f(lightL, 0.6, 0.6, 0.6);
-	gl.uniform3f(lightDirL, 0.0, -0.3, 1.0);
+	gl.uniform3f(lightL, 1, 1, 1);
+	gl.uniform3f(lightDirL, 100.0, 100.0, 100.0);
+	gl.uniform3f(lightPosL, 0.0, 10.0, -10.0);
 
 	//Draw
 	var identityMat = new Float32Array(16);
@@ -237,11 +238,13 @@ var Run = function(texture, vsText, fsText, model) {
 
 	mat4.rotate(fxRot, identityMat, glMatrix.toRadian(270), [1, 0, 0]);
 	mat4.rotate(fyRot, identityMat, glMatrix.toRadian(0), [0, 1, 0]);
-	mat4.rotate(fzRot, identityMat, glMatrix.toRadian(0), [0, 0, 1]);
+	mat4.rotate(fzRot, identityMat, glMatrix.toRadian(150), [0, 0, 1]);
 
-	var s = 0.05;
+	//var s = 0.003;
+	var s = 5;
 	mat4.fromScaling(scale, [s, s, s]);
-	mat4.fromTranslation(trans, [0, -1000, -800]);
+	//mat4.fromTranslation(trans, [0, -1000, -800]);
+	mat4.fromTranslation(trans, [0, 0, 0]);
 
 	var angle = 0;
 	var loop = function() {
@@ -262,20 +265,21 @@ var Run = function(texture, vsText, fsText, model) {
 
 		mat4.mul(world, identityMat, identityMat);
 
-		mat4.identity(nmatrix);
-		mat4.mul(nmatrix, nmatrix, model);
-		mat4.mul(nmatrix, nmatrix, world);
-		mat4.mul(nmatrix, nmatrix, view);
+		mat4.identity(nmatrix4);
+		mat4.mul(nmatrix4, nmatrix4, view);
+		mat4.mul(nmatrix4, nmatrix4, world);
+		mat4.mul(nmatrix4, nmatrix4, model);
 
-		mat4.invert(nmatrix, nmatrix);
-		mat4.transpose(nmatrix, nmatrix);
+		mat3.fromMat4(nmatrix3, nmatrix4);
+		mat3.invert(nmatrix3, nmatrix3);
+		mat3.transpose(nmatrix3, nmatrix3);
 
 		gl.uniformMatrix4fv(modelL, gl.FALSE, model);
 		gl.uniformMatrix4fv(worldL, gl.FALSE, world);
 		gl.uniformMatrix4fv(viewL, gl.FALSE, view);
 		gl.uniformMatrix4fv(projL, gl.FALSE, proj);
 
-		gl.uniformMatrix4fv(nmatrixL, gl.FALSE, nmatrix);
+		gl.uniformMatrix3fv(nmatrixL, gl.FALSE, nmatrix3);
 
 		gl.clearColor(0.1, 0.1, 0.1, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
