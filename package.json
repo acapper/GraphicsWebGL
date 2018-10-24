@@ -1,8 +1,24 @@
 {
 	"name": "graphics-webgl",
-	"version": "",
 	"dependencies": {
 		"gl-matrix": "^2.8.1",
 		"live-server": "^1.2.0"
-	}
+	},
+	"description": "",
+	"version": "1.0.0",
+	"main": "",
+	"devDependencies": {},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/acapper/GraphicsWebGL.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/acapper/GraphicsWebGL/issues"
+	},
+	"homepage": "https://github.com/acapper/GraphicsWebGL#readme"
 }
