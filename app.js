@@ -246,8 +246,17 @@ var Run = function(texture, vsText, fsText, model) {
 	mat4.fromTranslation(trans, [0, 0, -600]);
 	//mat4.fromTranslation(trans, [0, 0, 0]);
 
+	const fpsElem = document.querySelector('#fps');
+
 	var angle = 0;
-	var loop = function() {
+	var then = 0;
+	var loop = function(now) {
+		now *= 0.001; // convert to seconds
+		const deltaTime = now - then; // compute time since last frame
+		then = now; // remember time for next frame
+		const fps = 1 / deltaTime; // compute frames per second
+		fpsElem.textContent = fps.toFixed(1); // update fps display
+
 		angle = ((performance.now() / 1000) * (2 * Math.PI)) / 4;
 		mat4.rotate(xRot, identityMat, 0, [1, 0, 0]);
 		mat4.rotate(yRot, identityMat, 0, [0, 1, 0]);
