@@ -204,7 +204,7 @@ var Run = function(texture, vsText, fsText, model) {
 
 	mat4.identity(model);
 	mat4.identity(world);
-	mat4.lookAt(view, [0, 0, -10], [0, 0, 0], [0, 1, 0]);
+	mat4.lookAt(view, [0, 8, -10], [0, 4, -2], [0, 1, 0]);
 	mat4.perspective(
 		proj,
 		glMatrix.toRadian(90),
@@ -217,7 +217,7 @@ var Run = function(texture, vsText, fsText, model) {
 	var nmatrix3 = new Float32Array(9);
 
 	gl.uniform3f(lightL, 1, 1, 1);
-	gl.uniform3f(lightDirL, 100.0, 100.0, 100.0);
+	gl.uniform3f(lightDirL, 100.0, 50.0, 150.0);
 	gl.uniform3f(lightPosL, 0.0, 10.0, -10.0);
 
 	//Draw
@@ -243,7 +243,7 @@ var Run = function(texture, vsText, fsText, model) {
 	var s = 0.01;
 	//var s = 5;
 	mat4.fromScaling(scale, [s, s, s]);
-	mat4.fromTranslation(trans, [0, 0, -600]);
+	mat4.fromTranslation(trans, [0, 0, -500]);
 	//mat4.fromTranslation(trans, [0, 0, 0]);
 
 	const fpsElem = document.querySelector('#fps');
