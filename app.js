@@ -13,6 +13,19 @@ var readTextFile = function(file, call) {
 };
 
 var Init = function() {
+	var image = loadImage('texture.png');
+	var vsText = loadTextResource('shaders/vert.vert');
+	var fsText = loadTextResource('shaders/frag.frag');
+	var model = loadJSONResource('models/lowpolydeer/deer.json');
+
+	return Promise.all([image, vsText, fsText, model]).then(
+		([imageR, vsTextR, fsTextR, modelR]) => {
+			Run(imageR, vsTextR, fsTextR, modelR);
+		}
+	);
+};
+
+var Run = function(texture, vsText, fsText, model) {
 	var canvas = document.getElementById('mycanvas');
 	var gl = canvas.getContext('webgl');
 
@@ -31,361 +44,254 @@ var Init = function() {
 	gl.frontFace(gl.CCW);
 	gl.cullFace(gl.BACK);
 
-	readTextFile('vert.vert', vsText => {
-		readTextFile('frag.frag', fsText => {
-			var vShader = gl.createShader(gl.VERTEX_SHADER);
-			var fShader = gl.createShader(gl.FRAGMENT_SHADER);
+	var vShader = gl.createShader(gl.VERTEX_SHADER);
+	var fShader = gl.createShader(gl.FRAGMENT_SHADER);
 
-			gl.shaderSource(vShader, vsText);
-			gl.shaderSource(fShader, fsText);
+	gl.shaderSource(vShader, vsText);
+	gl.shaderSource(fShader, fsText);
 
-			gl.compileShader(vShader);
-			if (!gl.getShaderParameter(vShader, gl.COMPILE_STATUS)) {
-				console.error(
-					'ERROR compiling vertex shader!',
-					gl.getShaderInfoLog(vShader)
-				);
-				return;
-			}
+	gl.compileShader(vShader);
+	if (!gl.getShaderParameter(vShader, gl.COMPILE_STATUS)) {
+		console.error(
+			'ERROR compiling vertex shader!',
+			gl.getShaderInfoLog(vShader)
+		);
+		return;
+	}
 
-			gl.compileShader(fShader);
-			if (!gl.getShaderParameter(fShader, gl.COMPILE_STATUS)) {
-				console.error(
-					'ERROR compiling fragment shader!',
-					gl.getShaderInfoLog(fShader)
-				);
-				return;
-			}
+	gl.compileShader(fShader);
+	if (!gl.getShaderParameter(fShader, gl.COMPILE_STATUS)) {
+		console.error(
+			'ERROR compiling fragment shader!',
+			gl.getShaderInfoLog(fShader)
+		);
+		return;
+	}
 
-			var program = gl.createProgram();
-			gl.attachShader(program, vShader);
-			gl.attachShader(program, fShader);
-			gl.linkProgram(program);
+	var program = gl.createProgram();
+	gl.attachShader(program, vShader);
+	gl.attachShader(program, fShader);
+	gl.linkProgram(program);
 
-			if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-				console.error(
-					'ERROR linking program!',
-					gl.getProgramInfoLog(program)
-				);
-				return;
-			}
+	if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+		console.error('ERROR linking program!', gl.getProgramInfoLog(program));
+		return;
+	}
 
-			gl.validateProgram(program);
-			if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
-				console.error(
-					'ERROR validating program!',
-					gl.getProgramInfoLog(program)
-				);
-				return;
-			}
+	gl.validateProgram(program);
+	if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+		console.error(
+			'ERROR validating program!',
+			gl.getProgramInfoLog(program)
+		);
+		return;
+	}
 
-			var boxVertices = [
-				// X, Y, Z           R, G, B
-				// Top
-				-1.0,
-				1.0,
-				-1.0,
-				1,
-				0,
-				0,
-				-1.0,
-				1.0,
-				1.0,
-				1,
-				0,
-				0,
-				1.0,
-				1.0,
-				1.0,
-				1,
-				0,
-				0,
-				1.0,
-				1.0,
-				-1.0,
-				1,
-				0,
-				0,
+	//
+	// Create buffer
+	//
+	var modelIndicies = [].concat.apply([], model.meshes[0].faces);
+	var modelVerts = model.meshes[0].vertices;
+	var modelTextureCoords = model.meshes[0].texturecoords[0];
+	var modelNormals = model.meshes[0].normals;
 
-				// Left
-				-1.0,
-				1.0,
-				1.0,
-				0,
-				1,
-				0,
-				-1.0,
-				-1.0,
-				1.0,
-				0,
-				1,
-				0,
-				-1.0,
-				-1.0,
-				-1.0,
-				0,
-				1,
-				0,
-				-1.0,
-				1.0,
-				-1.0,
-				0,
-				1,
-				0,
+	var modelIndexBO = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, modelIndexBO);
+	gl.bufferData(
+		gl.ELEMENT_ARRAY_BUFFER,
+		new Uint16Array(modelIndicies),
+		gl.STATIC_DRAW
+	);
 
-				// Right
-				1.0,
-				1.0,
-				1.0,
-				0,
-				0,
-				1,
-				1.0,
-				-1.0,
-				1.0,
-				0,
-				0,
-				1,
-				1.0,
-				-1.0,
-				-1.0,
-				0,
-				0,
-				1,
-				1.0,
-				1.0,
-				-1.0,
-				0,
-				0,
-				1,
+	var modelPosVBO = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, modelPosVBO);
+	gl.bufferData(
+		gl.ARRAY_BUFFER,
+		new Float32Array(modelVerts),
+		gl.STATIC_DRAW
+	);
 
-				// Front
-				1.0,
-				1.0,
-				1.0,
-				1,
-				1,
-				0,
-				1.0,
-				-1.0,
-				1.0,
-				1,
-				1,
-				0,
-				-1.0,
-				-1.0,
-				1.0,
-				1,
-				1,
-				0,
-				-1.0,
-				1.0,
-				1.0,
-				1,
-				1,
-				0,
+	var modelTextCoordVBO = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, modelTextCoordVBO);
+	gl.bufferData(
+		gl.ARRAY_BUFFER,
+		new Float32Array(modelTextureCoords),
+		gl.STATIC_DRAW
+	);
 
-				// Back
-				1.0,
-				1.0,
-				-1.0,
-				0,
-				1,
-				1,
-				1.0,
-				-1.0,
-				-1.0,
-				0,
-				1,
-				1,
-				-1.0,
-				-1.0,
-				-1.0,
-				0,
-				1,
-				1,
-				-1.0,
-				1.0,
-				-1.0,
-				0,
-				1,
-				1,
+	var modelNormalVBO = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, modelNormalVBO);
+	gl.bufferData(
+		gl.ARRAY_BUFFER,
+		new Float32Array(modelNormals),
+		gl.STATIC_DRAW
+	);
 
-				// Bottom
-				-1.0,
-				-1.0,
-				-1.0,
-				1,
-				0,
-				1,
-				-1.0,
-				-1.0,
-				1.0,
-				1,
-				0,
-				1,
-				1.0,
-				-1.0,
-				1.0,
-				1,
-				0,
-				1,
-				1.0,
-				-1.0,
-				-1.0,
-				1,
-				0,
-				1
-			];
+	gl.bindBuffer(gl.ARRAY_BUFFER, modelPosVBO);
+	var positionAttribLocation = gl.getAttribLocation(program, 'position');
+	gl.vertexAttribPointer(
+		positionAttribLocation, // Attribute location
+		3, // Number of elements per attribute
+		gl.FLOAT, // Type of elements
+		gl.FALSE,
+		3 * Float32Array.BYTES_PER_ELEMENT, // Size of an individual vertex
+		0 // Offset from the beginning of a single vertex to this attribute
+	);
+	gl.enableVertexAttribArray(positionAttribLocation);
 
-			var boxIndices = [
-				// Top
-				0,
-				1,
-				2,
-				0,
-				2,
-				3,
+	gl.bindBuffer(gl.ARRAY_BUFFER, modelTextCoordVBO);
+	var texCoordAttribLocation = gl.getAttribLocation(program, 'texture');
+	gl.vertexAttribPointer(
+		texCoordAttribLocation, // Attribute location
+		2, // Number of elements per attribute
+		gl.FLOAT, // Type of elements
+		gl.FALSE,
+		2 * Float32Array.BYTES_PER_ELEMENT, // Size of an individual vertex
+		0 // Offset from the beginning of a single vertex to this attribute
+	);
+	gl.enableVertexAttribArray(texCoordAttribLocation);
 
-				// Left
-				5,
-				4,
-				6,
-				6,
-				4,
-				7,
+	gl.bindBuffer(gl.ARRAY_BUFFER, modelNormalVBO);
+	var normalAttribLocation = gl.getAttribLocation(program, 'normal');
+	gl.vertexAttribPointer(
+		normalAttribLocation, // Attribute location
+		3, // Number of elements per attribute
+		gl.FLOAT, // Type of elements
+		gl.TRUE,
+		3 * Float32Array.BYTES_PER_ELEMENT, // Size of an individual vertex
+		0 // Offset from the beginning of a single vertex to this attribute
+	);
+	gl.enableVertexAttribArray(normalAttribLocation);
 
-				// Right
-				8,
-				9,
-				10,
-				8,
-				10,
-				11,
+	//
+	// Create texture
+	//
+	var modelTexture = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, modelTexture);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.texImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGBA,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		texture
+	);
+	gl.bindTexture(gl.TEXTURE_2D, null);
 
-				// Front
-				13,
-				12,
-				14,
-				15,
-				14,
-				12,
+	//Uniforms
+	gl.useProgram(program);
 
-				// Back
-				16,
-				17,
-				18,
-				16,
-				18,
-				19,
+	var modelL = gl.getUniformLocation(program, 'model');
+	var worldL = gl.getUniformLocation(program, 'world');
+	var viewL = gl.getUniformLocation(program, 'view');
+	var projL = gl.getUniformLocation(program, 'proj');
 
-				// Bottom
-				21,
-				20,
-				22,
-				22,
-				20,
-				23
-			];
+	var nmatrixL = gl.getUniformLocation(program, 'nmatrix');
 
-			//Indexes
-			var VIBO = gl.createBuffer();
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, VIBO);
-			gl.bufferData(
-				gl.ELEMENT_ARRAY_BUFFER,
-				new Uint16Array(boxIndices),
-				gl.STATIC_DRAW
-			);
+	var ambientL = gl.getUniformLocation(program, 'ambient');
+	var lightL = gl.getUniformLocation(program, 'light');
+	var lightDirL = gl.getUniformLocation(program, 'lightDir');
 
-			//Vertexes
-			var VBO = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-			gl.bufferData(
-				gl.ARRAY_BUFFER,
-				new Float32Array(boxVertices),
-				gl.STATIC_DRAW
-			);
+	var model = new Float32Array(16);
+	var world = new Float32Array(16);
+	var view = new Float32Array(16);
+	var proj = new Float32Array(16);
 
-			var positionL = gl.getAttribLocation(program, 'position');
-			gl.vertexAttribPointer(
-				positionL,
-				3,
-				gl.FLOAT,
-				gl.FALSE,
-				6 * Float32Array.BYTES_PER_ELEMENT,
-				0
-			);
-			gl.enableVertexAttribArray(positionL);
+	mat4.identity(model);
+	mat4.identity(world);
+	mat4.lookAt(view, [0, 0, -8], [0, 0, 0], [0, 1, 0]);
+	mat4.perspective(
+		proj,
+		glMatrix.toRadian(90),
+		canvas.clientWidth / canvas.clientHeight,
+		0.1,
+		1000.0
+	);
 
-			var colourL = gl.getAttribLocation(program, 'colour');
-			gl.vertexAttribPointer(
-				colourL,
-				3,
-				gl.FLOAT,
-				gl.FALSE,
-				6 * Float32Array.BYTES_PER_ELEMENT,
-				3 * Float32Array.BYTES_PER_ELEMENT
-			);
-			gl.enableVertexAttribArray(colourL);
+	var nmatrix = new Float32Array(16);
 
-			//Uniforms
-			gl.useProgram(program);
+	gl.uniform3f(ambientL, 0.2, 0.2, 0.2);
+	gl.uniform3f(lightL, 0.6, 0.6, 0.6);
+	gl.uniform3f(lightDirL, 0.0, -0.3, 1.0);
 
-			var modelL = gl.getUniformLocation(program, 'model');
-			var viewL = gl.getUniformLocation(program, 'view');
-			var projL = gl.getUniformLocation(program, 'proj');
+	//Draw
+	var identityMat = new Float32Array(16);
+	var xRot = new Float32Array(16);
+	var yRot = new Float32Array(16);
+	var zRot = new Float32Array(16);
 
-			var model = new Float32Array(16);
-			var view = new Float32Array(16);
-			var proj = new Float32Array(16);
+	var fxRot = new Float32Array(16);
+	var fyRot = new Float32Array(16);
+	var fzRot = new Float32Array(16);
 
-			mat4.identity(model);
-			mat4.lookAt(view, [0, 0, -5], [0, 0, 0], [0, 1, 0]);
-			mat4.perspective(
-				proj,
-				glMatrix.toRadian(90),
-				canvas.clientWidth / canvas.clientHeight,
-				0.1,
-				1000.0
-			);
+	var scale = new Float32Array(16);
+	var trans = new Float32Array(16);
 
-			gl.uniformMatrix4fv(modelL, gl.FALSE, model);
-			gl.uniformMatrix4fv(viewL, gl.FALSE, view);
-			gl.uniformMatrix4fv(projL, gl.FALSE, proj);
+	var identityMat = new Float32Array(16);
+	mat4.identity(identityMat);
 
-			//Draw
-			var identityMat = new Float32Array(16);
-			var xRot = new Float32Array(16);
-			var yRot = new Float32Array(16);
-			var zRot = new Float32Array(16);
+	mat4.rotate(fxRot, identityMat, glMatrix.toRadian(270), [1, 0, 0]);
+	mat4.rotate(fyRot, identityMat, glMatrix.toRadian(0), [0, 1, 0]);
+	mat4.rotate(fzRot, identityMat, glMatrix.toRadian(0), [0, 0, 1]);
 
-			var identityMat = new Float32Array(16);
-			mat4.identity(identityMat);
-			var angle = 0;
-			var loop = function() {
-				angle = (performance.now() / 1000 / 6) * 2 * Math.PI;
-				mat4.rotate(xRot, identityMat, angle / 2, [1, 0, 0]);
-				mat4.rotate(yRot, identityMat, angle / 4, [0, 1, 0]);
-				mat4.rotate(zRot, identityMat, angle / 6, [0, 0, 1]);
+	var s = 0.05;
+	mat4.fromScaling(scale, [s, s, s]);
+	mat4.fromTranslation(trans, [0, -1000, -800]);
 
-				mat4.mul(model, identityMat, xRot);
-				mat4.mul(model, model, yRot);
-				mat4.mul(model, model, zRot);
+	var angle = 0;
+	var loop = function() {
+		angle = ((performance.now() / 1000) * (2 * Math.PI)) / 4;
+		mat4.rotate(xRot, identityMat, 0, [1, 0, 0]);
+		mat4.rotate(yRot, identityMat, 0, [0, 1, 0]);
+		mat4.rotate(zRot, identityMat, angle / 6, [0, 0, 1]);
 
-				gl.clearColor(0, 0, 0, 1);
-				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-				gl.uniformMatrix4fv(modelL, gl.FALSE, model);
+		mat4.mul(model, identityMat, identityMat);
+		mat4.mul(model, model, scale);
+		mat4.mul(model, model, fxRot);
+		mat4.mul(model, model, fyRot);
+		mat4.mul(model, model, fzRot);
+		mat4.mul(model, model, trans);
+		mat4.mul(model, model, xRot);
+		mat4.mul(model, model, yRot);
+		mat4.mul(model, model, zRot);
 
-				gl.drawElements(
-					gl.TRIANGLES,
-					boxIndices.length,
-					gl.UNSIGNED_SHORT,
-					0
-				);
+		mat4.mul(world, identityMat, identityMat);
 
-				requestAnimationFrame(loop);
-			};
-			requestAnimationFrame(loop);
-		});
-	});
+		mat4.identity(nmatrix);
+		mat4.mul(nmatrix, nmatrix, model);
+		mat4.mul(nmatrix, nmatrix, world);
+		mat4.mul(nmatrix, nmatrix, view);
+
+		mat4.invert(nmatrix, nmatrix);
+		mat4.transpose(nmatrix, nmatrix);
+
+		gl.uniformMatrix4fv(modelL, gl.FALSE, model);
+		gl.uniformMatrix4fv(worldL, gl.FALSE, world);
+		gl.uniformMatrix4fv(viewL, gl.FALSE, view);
+		gl.uniformMatrix4fv(projL, gl.FALSE, proj);
+
+		gl.uniformMatrix4fv(nmatrixL, gl.FALSE, nmatrix);
+
+		gl.clearColor(0.1, 0.1, 0.1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		gl.uniformMatrix4fv(modelL, gl.FALSE, model);
+
+		gl.bindTexture(gl.TEXTURE_2D, modelTexture);
+		gl.activeTexture(gl.TEXTURE0);
+
+		gl.drawElements(
+			gl.TRIANGLES,
+			modelIndicies.length,
+			gl.UNSIGNED_SHORT,
+			0
+		);
+
+		requestAnimationFrame(loop);
+	};
+	requestAnimationFrame(loop);
 };
