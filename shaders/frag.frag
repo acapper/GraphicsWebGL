@@ -19,7 +19,8 @@ void main()
 
 	vec3 N = normalize(fNormal);			// Be careful with the order of multiplication!
 	vec3 L = normalize(lightDir);					// Ensure light_dir is unit length
-	vec4 diffuse = max(dot(L, N), 0.0) * diffuse_colour;
+	float intensity = max(dot(L, N), 0.0);
+	vec4 diffuse = intensity * diffuse_colour;
 
 	// Calculate specular lighting
 	vec4 specular_colour = vec4(1.0, 1.0, 1.0, 1.0);
@@ -40,3 +41,4 @@ void main()
 	//gl_FragColor = ambient + diffuse + specular;
 	//gl_FragColor = vec4(fNormal, 1.0);
 }
+
