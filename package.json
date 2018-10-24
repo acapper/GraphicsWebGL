@@ -1,0 +1,8 @@
+{
+	"name": "graphics-webgl",
+	"version": "",
+	"dependencies": {
+		"gl-matrix": "^2.8.1",
+		"live-server": "^1.2.0"
+	}
+}
