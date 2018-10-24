@@ -16,7 +16,7 @@ var Init = function() {
 	var image = loadImage('texture.png');
 	var vsText = loadTextResource('shaders/vert.vert');
 	var fsText = loadTextResource('shaders/frag.frag');
-	var model = loadJSONResource('models/susan/susan.json');
+	var model = loadJSONResource('models/lowpolydeer/deer.json');
 
 	return Promise.all([image, vsText, fsText, model]).then(
 		([imageR, vsTextR, fsTextR, modelR]) => {
@@ -240,11 +240,11 @@ var Run = function(texture, vsText, fsText, model) {
 	mat4.rotate(fyRot, identityMat, glMatrix.toRadian(0), [0, 1, 0]);
 	mat4.rotate(fzRot, identityMat, glMatrix.toRadian(150), [0, 0, 1]);
 
-	//var s = 0.003;
-	var s = 5;
+	var s = 0.01;
+	//var s = 5;
 	mat4.fromScaling(scale, [s, s, s]);
-	//mat4.fromTranslation(trans, [0, -1000, -800]);
-	mat4.fromTranslation(trans, [0, 0, 0]);
+	mat4.fromTranslation(trans, [0, 0, -600]);
+	//mat4.fromTranslation(trans, [0, 0, 0]);
 
 	var angle = 0;
 	var loop = function() {
