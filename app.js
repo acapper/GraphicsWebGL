@@ -107,30 +107,31 @@ var Run = function(texture, vsText, fsText, modeljson) {
 	};
 
 	var update = function(delta) {
-		keyboard();
+		keyboard(delta);
 		modeltop.update(delta);
 		modelbot.update(delta);
 	};
 
 	var keyboard = function(delta) {
+		var v = 75;
 		if (keys['E'.charCodeAt(0)]) {
 			var rot = modeltop.getRotation();
-			rot[1] -= 1;
+			rot[1] -= v * 1 * delta;
 			modeltop.setRotation(rot);
 		}
 		if (keys['Q'.charCodeAt(0)]) {
 			var rot = modeltop.getRotation();
-			rot[1] += 1;
+			rot[1] += v * 1 * delta;
 			modeltop.setRotation(rot);
 		}
 		if (keys['D'.charCodeAt(0)]) {
 			var rot = modelbot.getRotation();
-			rot[1] -= 0.5;
+			rot[1] -= v * 0.5 * delta;
 			modelbot.setRotation(rot);
 		}
 		if (keys['A'.charCodeAt(0)]) {
 			var rot = modelbot.getRotation();
-			rot[1] += 0.5;
+			rot[1] += v * 0.5 * delta;
 			modelbot.setRotation(rot);
 		}
 	};
