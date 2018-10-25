@@ -16,8 +16,9 @@ var Init = function() {
 	var image = loadImage('texture.png');
 	var vsText = loadTextResource('shaders/vert.vert');
 	var fsText = loadTextResource('shaders/frag.frag');
-	//var model = loadJSONResource('models/T34/T34.json');
-	var model = loadJSONResource('models/lowpolydeer/deer.json');
+	var model = loadJSONResource('models/T34/T34.json');
+	//var model = loadJSONResource('models/51tank/m1.json');
+	//var model = loadJSONResource('models/lowpolydeer/deer.json');
 
 	return Promise.all([image, vsText, fsText, model]).then(
 		([imageR, vsTextR, fsTextR, modelR]) => {
@@ -26,7 +27,7 @@ var Init = function() {
 	);
 };
 
-var Run = function(texture, vsText, fsText, model) {
+var Run = function(texture, vsText, fsText, modeljson) {
 	var canvas = document.getElementById('mycanvas');
 	var gl = canvas.getContext('webgl');
 
@@ -47,11 +48,15 @@ var Run = function(texture, vsText, fsText, model) {
 
 	var shader = new Shader(gl, vsText, fsText);
 
-	var s = [0.009, 0.009, 0.009];
-	var r = [270, 0, 50];
-	var t = [0, 0, -500];
+	var s = [0.006, 0.006, 0.006];
+	var r = [0, 90, 0];
+	var t = [0, 0, 0];
 
-	var model = new Model(gl, model, texture, shader, s, r, t);
+	var tankTop = [0, 2, 3, 7, 9, 10, 13];
+	var tankBot = [1, 4, 5, 6, 8, 11, 12];
+
+	var modeltop = new Model(gl, modeljson, texture, shader, s, r, t, tankTop);
+	var modelbot = new Model(gl, modeljson, texture, shader, s, r, t, tankBot);
 
 	const fpsElem = document.querySelector('#fps');
 
@@ -60,18 +65,16 @@ var Run = function(texture, vsText, fsText, model) {
 	var proj = new Float32Array(16);
 
 	mat4.identity(world);
-	mat4.lookAt(view, [0, 8, -10], [0, 4, -2], [0, 1, 0]);
+	mat4.lookAt(view, [0, 2, -3], [0, 0, 0], [0, 1, 0]);
 	mat4.perspective(proj, glMatrix.toRadian(90), 1280 / 960, 0.1, 1000.0);
 
-	var mShaderProgram = model.getShader().getProgram();
+	var mShaderProgram = modeltop.getShader().getProgram();
 	gl.useProgram(mShaderProgram);
 
-	var worldL = gl.getUniformLocation(mShaderProgram, 'world');
-	var viewL = gl.getUniformLocation(mShaderProgram, 'view');
+	var mvmatrixL = gl.getUniformLocation(mShaderProgram, 'mvmatrix');
 	var projL = gl.getUniformLocation(mShaderProgram, 'proj');
 
-	gl.uniformMatrix4fv(worldL, gl.FALSE, world);
-	gl.uniformMatrix4fv(viewL, gl.FALSE, view);
+	gl.uniformMatrix4fv(mvmatrixL, gl.FALSE, mat4.mul(view, world, view));
 	gl.uniformMatrix4fv(projL, gl.FALSE, proj);
 
 	var lightL = gl.getUniformLocation(mShaderProgram, 'light');
@@ -83,16 +86,69 @@ var Run = function(texture, vsText, fsText, model) {
 	gl.uniform3f(lightPosL, 0.0, 10.0, -10.0);
 
 	var then = 0;
-	var loop = function(now) {
+	var draw = function(now) {
 		now *= 0.001; // convert to seconds
 		const deltaTime = now - then; // compute time since last frame
 		then = now; // remember time for next frame
 		const fps = 1 / deltaTime; // compute frames per second
 		fpsElem.textContent = fps.toFixed(1); // update fps display
 
-		model.draw(performance.now(), world, view);
-
-		requestAnimationFrame(loop);
+		update(deltaTime);
+		render(deltaTime);
+		requestAnimationFrame(draw);
 	};
-	requestAnimationFrame(loop);
+	requestAnimationFrame(draw);
+
+	var render = function(delta) {
+		gl.clearColor(0.1, 0.1, 0.1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		modeltop.draw(world, view);
+		modelbot.draw(world, view);
+	};
+
+	var update = function(delta) {
+		keyboard();
+		modeltop.update(delta);
+		modelbot.update(delta);
+	};
+
+	var keyboard = function(delta) {
+		if (keys['E'.charCodeAt(0)]) {
+			var rot = modeltop.getRotation();
+			rot[1] -= 1;
+			modeltop.setRotation(rot);
+		}
+		if (keys['Q'.charCodeAt(0)]) {
+			var rot = modeltop.getRotation();
+			rot[1] += 1;
+			modeltop.setRotation(rot);
+		}
+		if (keys['D'.charCodeAt(0)]) {
+			var rot = modelbot.getRotation();
+			rot[1] -= 0.5;
+			modelbot.setRotation(rot);
+		}
+		if (keys['A'.charCodeAt(0)]) {
+			var rot = modelbot.getRotation();
+			rot[1] += 0.5;
+			modelbot.setRotation(rot);
+		}
+	};
 };
+
+var keys = [];
+window.addEventListener(
+	'keydown',
+	function(e) {
+		keys[e.keyCode] = true;
+	},
+	false
+);
+
+window.addEventListener(
+	'keyup',
+	function(e) {
+		keys[e.keyCode] = false;
+	},
+	false
+);
