@@ -53,7 +53,7 @@ var Run = function(texture, vsText, fsText, modeljson) {
 	var t = [0, 0, 0];
 
 	var tankTop = [0, 2, 3, 7, 9, 10, 13];
-	var tankBot = [1, 4, 5, 6, 8, 11, 12];
+	var tankBot = [1, 4, 5, 6, 8, 11, 12, 14];
 
 	var modeltop = new Model(gl, modeljson, texture, shader, s, r, t, tankTop);
 	var modelbot = new Model(gl, modeljson, texture, shader, s, r, t, tankBot);
