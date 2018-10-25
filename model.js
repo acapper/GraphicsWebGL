@@ -13,6 +13,7 @@ class Model {
 
 		this.modeljson = modeljson;
 		this.texture = texture;
+		this.modelTexture = null;
 		this.meshIndices = meshIndices;
 
 		this.shader = shader;
@@ -84,8 +85,8 @@ class Model {
 		);
 
 		this.staticTransform();
-
 		this.createBuffers();
+		this.bindTexture();
 	}
 
 	getShader() {
@@ -195,8 +196,8 @@ class Model {
 	}
 
 	bindTexture() {
-		var modelTexture = this.gl.createTexture();
-		this.gl.bindTexture(this.gl.TEXTURE_2D, modelTexture);
+		this.modelTexture = this.gl.createTexture();
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.modelTexture);
 		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
 		this.gl.texParameteri(
 			this.gl.TEXTURE_2D,
@@ -238,7 +239,8 @@ class Model {
 	}
 
 	draw(world, view) {
-		this.bindTexture();
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.modelTexture);
+		this.gl.activeTexture(this.gl.TEXTURE0);
 		for (var i = 0; i < this.indexBuffer.length; i++) {
 			this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
 

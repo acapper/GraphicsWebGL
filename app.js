@@ -65,8 +65,8 @@ var Run = function(texture, vsText, fsText, modeljson) {
 	var proj = new Float32Array(16);
 
 	mat4.identity(world);
-	mat4.lookAt(view, [0, 2, -3], [0, 0, 0], [0, 1, 0]);
-	mat4.perspective(proj, glMatrix.toRadian(90), 1280 / 960, 0.1, 1000.0);
+	mat4.lookAt(view, [0, 3, -4], [0, 0, 0], [0, 1, 0]);
+	mat4.perspective(proj, glMatrix.toRadian(90), 1280 / 960, 0.1, 10000.0);
 
 	var mShaderProgram = modeltop.getShader().getProgram();
 	gl.useProgram(mShaderProgram);
