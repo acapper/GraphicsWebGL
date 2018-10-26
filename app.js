@@ -166,13 +166,13 @@ var Run = function(texture, texture2, vsText, fsText, modeljson, deerjson) {
 			mat4.lookAt(view, viewPos, viewLook, viewUp);
 		}
 		if (keys['H'.charCodeAt(0)]) {
-			viewPos[0] -= 0.5 * delta;
-			viewLook[0] -= 0.5 * delta;
+			viewPos[0] += 0.5 * delta;
+			viewLook[0] += 0.5 * delta;
 			mat4.lookAt(view, viewPos, viewLook, viewUp);
 		}
 		if (keys['K'.charCodeAt(0)]) {
-			viewPos[0] += 0.5 * delta;
-			viewLook[0] += 0.5 * delta;
+			viewPos[0] -= 0.5 * delta;
+			viewLook[0] -= 0.5 * delta;
 			mat4.lookAt(view, viewPos, viewLook, viewUp);
 		}
 		if (keys['O'.charCodeAt(0)]) {
