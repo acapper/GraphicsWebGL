@@ -1,5 +1,6 @@
 class Light {
 	constructor(light, model) {
+		this.gl = model.gl;
 		this.model = new Model({
 			gl: model.gl,
 			modeljson: model.modeljson,
@@ -14,6 +15,10 @@ class Light {
 		this.lightCol = light.colour;
 		this.lightDir = light.direction;
 		this.setLightPos(model.t);
+
+		var program = this.model.getShader().getProgram();
+		this.gl.useProgram(program);
+		this.colourL = this.gl.getUniformLocation(program, 'lightcolour');
 	}
 
 	setLightCol(col) {
@@ -45,6 +50,12 @@ class Light {
 	}
 
 	draw(world, view, proj, light) {
+		this.gl.useProgram(
+			this.getModel()
+				.getShader()
+				.getProgram()
+		);
+		this.gl.uniform3fv(this.colourL, this.lightCol);
 		this.model.draw(world, view, proj, light);
 	}
 }
