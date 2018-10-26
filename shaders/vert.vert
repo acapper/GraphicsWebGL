@@ -5,7 +5,8 @@ attribute vec2 texture;
 attribute vec3 normal;
 
 uniform mat4 model;
-uniform mat4 mvmatrix;
+uniform mat4 world;
+uniform mat4 view;
 uniform mat4 proj;
 uniform mat3 nmatrix;
 
@@ -17,6 +18,6 @@ void main()
 {
 	fTexture = texture;
 	fNormal =  (nmatrix * normal).xyz;
-	fPosition = mvmatrix * model * vec4(position, 1.0);	
-	gl_Position = proj * mvmatrix * model * vec4(position, 1.0);
+	fPosition = view * world * model * vec4(position, 1.0);	
+	gl_Position = proj * view * world * model * vec4(position, 1.0);
 }

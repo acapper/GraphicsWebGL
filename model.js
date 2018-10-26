@@ -46,7 +46,6 @@ class Model {
 		mat4.identity(this.identityMat);
 
 		// Static transforms
-		// TO DO Combine xrot yrot zrot into vector
 		this.fRot = rotation;
 		this.fRotMat = new Float32Array(16);
 
@@ -59,7 +58,6 @@ class Model {
 		this.rzm = mat4.create();
 
 		// Dynamic transforms
-		// TO DO Combine xrot yrot zrot into vector
 		this.rot = [0, 0, 0];
 		this.rotMat = new Float32Array(16);
 
@@ -136,8 +134,21 @@ class Model {
 	setRotation(rot) {
 		this.rot = rot;
 	}
+
 	getRotation() {
 		return this.rot;
+	}
+
+	getRotationF() {
+		return this.fRot;
+	}
+
+	setTrans(trans) {
+		this.trans = trans;
+	}
+
+	getTrans() {
+		return this.trans;
 	}
 
 	createNewIndexBuffer() {
@@ -150,7 +161,7 @@ class Model {
 
 	bindBufferData(bufferL, data, type) {
 		this.gl.bindBuffer(type, bufferL);
-		this.gl.bufferData(type, data, this.gl.DYNAMIC_DRAW);
+		this.gl.bufferData(type, data, this.gl.STATIC_DRAW);
 	}
 
 	getLastBuffer() {
@@ -230,15 +241,22 @@ class Model {
 		this.gl.activeTexture(this.gl.TEXTURE0);
 	}
 
-	bindUniforms() {
+	bindUniforms(world) {
 		//Uniforms
 		this.gl.useProgram(this.shader.getProgram());
+		var worldL = this.gl.getUniformLocation(
+			this.shader.getProgram(),
+			'world'
+		);
+		this.gl.uniformMatrix4fv(worldL, this.gl.FALSE, world);
 
 		this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
 		this.gl.uniformMatrix3fv(this.nmatrixL, this.gl.FALSE, this.nmatrix3);
 	}
 
 	draw(world, view) {
+		mat4.fromTranslation(world, this.trans);
+
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.modelTexture);
 		this.gl.activeTexture(this.gl.TEXTURE0);
 		for (var i = 0; i < this.indexBuffer.length; i++) {
@@ -255,7 +273,7 @@ class Model {
 
 			this.bindArrayBuffers(i);
 			this.bindIndexBuffers(i);
-			this.bindUniforms();
+			this.bindUniforms(world);
 
 			this.gl.drawElements(
 				this.gl.TRIANGLES,
