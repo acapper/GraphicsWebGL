@@ -317,10 +317,6 @@ class Model {
 	}
 
 	transformModel(model, scale, scaleMat, rot, rotMat, trans, transMat) {
-		// Scale
-		mat4.fromScaling(scaleMat, scale);
-		mat4.mul(model, model, scaleMat);
-
 		// Rotate
 		rotMat = this.rotateMat(
 			rotMat,
@@ -333,6 +329,10 @@ class Model {
 		// Translate
 		mat4.fromTranslation(transMat, trans);
 		mat4.mul(model, model, transMat);
+
+		// Scale
+		mat4.fromScaling(scaleMat, scale);
+		mat4.mul(model, model, scaleMat);
 		return model;
 	}
 
