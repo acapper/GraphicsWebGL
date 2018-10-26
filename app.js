@@ -18,7 +18,6 @@ var Init = function() {
 	var vsText = loadTextResource('shaders/vert.vert');
 	var fsText = loadTextResource('shaders/frag.frag');
 	var model = loadJSONResource('models/T34/T34.json');
-	//var model = loadJSONResource('models/51tank/m1.json');
 	var deer = loadJSONResource('models/lowpolydeer/deer.json');
 
 	return Promise.all([image, image2, vsText, fsText, model, deer]).then(
@@ -62,7 +61,7 @@ var Run = function(texture, texture2, vsText, fsText, modeljson, deerjson) {
 
 	var s = [0.006, 0.006, 0.006];
 	var r = [0, 90, 0];
-	var t = [0, 0, 0];
+	var t = [0, 0, -400];
 
 	var tankTop = [0, 2, 3, 7, 9, 10, 13];
 	var tankBot = [1, 4, 5, 6, 8, 11, 12, 14];
@@ -70,7 +69,7 @@ var Run = function(texture, texture2, vsText, fsText, modeljson, deerjson) {
 	var modeltop = new Model(gl, modeljson, texture2, shader, s, r, t, tankTop);
 	var modelbot = new Model(gl, modeljson, texture2, shader, s, r, t, tankBot);
 
-	var s = [0.002, 0.002, 0.002];
+	var s = [0.0015, 0.0015, 0.0015];
 	var r = [90, 180, 270];
 	var t = [0, -1500, 0];
 	var deer = new Model(gl, deerjson, texture, shader, s, r, t, null);
