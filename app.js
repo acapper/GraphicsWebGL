@@ -90,6 +90,8 @@ var viewUp = [0, 1, 0];
 
 var worldTrans = [0, 0, 0];
 
+var bomb;
+
 var Run = function(
 	gl,
 	texture,
@@ -105,7 +107,7 @@ var Run = function(
 	var t = [0, 0, 0];
 
 	var light = new Light(
-		{ colour: [1, 0, 0], direction: [1, 0, 0] },
+		{ colour: [1, 1, 1], direction: [1, 0, 0] },
 		{
 			gl,
 			modeljson: spherejson,
@@ -120,7 +122,7 @@ var Run = function(
 
 	var s = [0.006, 0.006, 0.006];
 	var r = [0, 90, 0];
-	var t = [0, 0, -400];
+	var t = [0, 0, -3];
 
 	var tankTop = [0, 2, 3, 7, 9, 10, 13];
 	var tankBot = [1, 4, 5, 6, 8, 11, 12, 14];
@@ -149,7 +151,7 @@ var Run = function(
 
 	var s = [0.0015, 0.0015, 0.0015];
 	var r = [90, 180, 270];
-	var t = [0, -1500, 0];
+	var t = [0, -2, 0];
 	var deer = new Model({
 		gl,
 		modeljson: deerjson,
@@ -160,6 +162,24 @@ var Run = function(
 		t,
 		meshIndices: null
 	});
+
+	var s = [0.1, 0.1, 0.1];
+	var r = [0, 0, 0];
+	var t = [0, 0, 0];
+
+	var bomb = new Light(
+		{ colour: [1, 0.6, 0], direction: [1, 0, 0] },
+		{
+			gl,
+			modeljson: spherejson,
+			texture: texture,
+			shader: lightshader,
+			s,
+			r,
+			t,
+			meshIndices: null
+		}
+	);
 
 	const fpsElem = document.querySelector('#fps');
 
@@ -191,6 +211,9 @@ var Run = function(
 		modelbot.draw(world, view, proj, light);
 		deer.draw(world, view, proj, light);
 		light.draw(world, view, proj, light);
+		if (bomb != null) {
+			bomb.draw(world, view, proj, light);
+		}
 	};
 
 	var update = function(delta) {
@@ -200,32 +223,104 @@ var Run = function(
 		deer.update(delta);
 	};
 
-	var keyboard = function(delta) {
-		var v = 75;
+	var v = 75;
+	var rottop = modeltop.getRotation();
+	var rotbot = modelbot.getRotation();
+	var rotf = modeltop.getRotationF();
+	var transtop = modeltop.getTrans();
+	var transtop = modeltop.getTrans();
+	var temp = vec3.create();
+	var forward = [
+		Math.sin(glMatrix.toRadian(rottop[1] + rotf[1])),
+		0,
+		Math.cos(glMatrix.toRadian(rottop[1] + rotf[1]))
+	];
+	var d = 0;
+
+	var tankControls = function(delta) {
 		if (keys['E'.charCodeAt(0)]) {
-			var rot = modeltop.getRotation();
-			rot[1] -= v * 1 * delta;
-			modeltop.setRotation(rot);
+			rottop = modeltop.getRotation();
+			rottop[1] -= v * 1 * delta;
+			modeltop.setRotation(rottop);
 		}
 		if (keys['Q'.charCodeAt(0)]) {
-			var rot = modeltop.getRotation();
-			rot[1] += v * 1 * delta;
-			modeltop.setRotation(rot);
+			rottop = modeltop.getRotation();
+			rottop[1] += v * 1 * delta;
+			modeltop.setRotation(rottop);
 		}
 		if (keys['D'.charCodeAt(0)]) {
-			var rot = modelbot.getRotation();
-			rot[1] -= v * 0.5 * delta;
-			var rott = modeltop.getRotation();
-			rott[1] -= v * 0.5 * delta;
-			modelbot.setRotation(rot);
+			rotbot = modelbot.getRotation();
+			rotbot[1] -= v * 0.5 * delta;
+			rottop = modeltop.getRotation();
+			rottop[1] -= v * 0.5 * delta;
+			modelbot.setRotation(rotbot);
+			modeltop.setRotation(rottop);
 		}
 		if (keys['A'.charCodeAt(0)]) {
-			var rot = modelbot.getRotation();
-			rot[1] += v * 0.5 * delta;
-			var rott = modeltop.getRotation();
-			rott[1] += v * 0.5 * delta;
-			modelbot.setRotation(rot);
+			rotbot = modelbot.getRotation();
+			rotbot[1] += v * 0.5 * delta;
+			rottop = modeltop.getRotation();
+			rottop[1] += v * 0.5 * delta;
+			modelbot.setRotation(rotbot);
+			modeltop.setRotation(rottop);
 		}
+		if (keys['W'.charCodeAt(0)]) {
+			rot = modelbot.getRotation();
+			rotf = modelbot.getRotationF();
+			forward = [
+				Math.sin(glMatrix.toRadian(rot[1] + rotf[1])),
+				0,
+				Math.cos(glMatrix.toRadian(rot[1] + rotf[1]))
+			];
+			d = 0.005;
+			vec3.normalize(forward, forward);
+			transbot = modelbot.getTrans();
+			transtop = modeltop.getTrans();
+			temp = vec3.create();
+			vec3.mul(temp, [d, d, d], forward);
+			vec3.add(transbot, transbot, temp);
+			modelbot.setTrans(transbot);
+			vec3.add(transtop, transtop, temp);
+			modelbot.setTrans(transtop);
+		}
+		if (keys['S'.charCodeAt(0)]) {
+			rot = modelbot.getRotation();
+			rotf = modelbot.getRotationF();
+			forward = [
+				Math.sin(glMatrix.toRadian(rot[1] + rotf[1])),
+				0,
+				Math.cos(glMatrix.toRadian(rot[1] + rotf[1]))
+			];
+			d = -0.005;
+			vec3.normalize(forward, forward);
+			transbot = modelbot.getTrans();
+			transtop = modeltop.getTrans();
+			temp = vec3.create();
+			vec3.mul(temp, [d, d, d], forward);
+			vec3.add(transbot, transbot, temp);
+			modelbot.setTrans(transbot);
+			vec3.add(transtop, transtop, temp);
+			modelbot.setTrans(transtop);
+		}
+		if (keys['V'.charCodeAt(0)]) {
+			transtop = modeltop.getTrans();
+			rot = modeltop.getRotation();
+			rotf = modeltop.getRotationF();
+			forward = [
+				Math.sin(glMatrix.toRadian(rot[1] + rotf[1])),
+				1,
+				Math.cos(glMatrix.toRadian(rot[1] + rotf[1]))
+			];
+			bomb.getModel().setTrans([
+				transtop[0] + 3 * forward[0] - 3,
+				1.36,
+				transtop[2] + 3 * forward[2]
+			]);
+			bomb.getModel().setRotation([0, 10, 0]);
+		}
+	};
+
+	var keyboard = function(delta) {
 		if (keys['U'.charCodeAt(0)]) {
 			viewPos[2] += 0.5 * delta;
 			viewLook[2] += 0.5 * delta;
@@ -261,44 +356,6 @@ var Run = function(
 			viewLook = [0, 0, 0];
 			mat4.lookAt(view, viewPos, viewLook, viewUp);
 		}
-		if (keys['W'.charCodeAt(0)]) {
-			var rot = modelbot.getRotation();
-			var rotf = modelbot.getRotationF();
-			var forward = [
-				Math.sin(glMatrix.toRadian(rot[1] + rotf[1])),
-				0,
-				Math.cos(glMatrix.toRadian(rot[1] + rotf[1]))
-			];
-			var d = 0.005;
-			vec3.normalize(forward, forward);
-			var transbot = modelbot.getTrans();
-			var transtop = modeltop.getTrans();
-			var temp = vec3.create();
-			vec3.mul(temp, [d, d, d], forward);
-			vec3.add(transbot, transbot, temp);
-			modelbot.setTrans(transbot);
-			vec3.add(transtop, transtop, temp);
-			modelbot.setTrans(transtop);
-		}
-		if (keys['S'.charCodeAt(0)]) {
-			var rot = modelbot.getRotation();
-			var rotf = modelbot.getRotationF();
-			var forward = [
-				Math.sin(glMatrix.toRadian(rot[1] + rotf[1])),
-				0,
-				Math.cos(glMatrix.toRadian(rot[1] + rotf[1]))
-			];
-			var d = -0.005;
-			vec3.normalize(forward, forward);
-			var transbot = modelbot.getTrans();
-			var transtop = modeltop.getTrans();
-			var temp = vec3.create();
-			vec3.mul(temp, [d, d, d], forward);
-			vec3.add(transbot, transbot, temp);
-			modelbot.setTrans(transbot);
-			vec3.add(transtop, transtop, temp);
-			modelbot.setTrans(transtop);
-		}
 		if (keys['T'.charCodeAt(0)]) {
 			var pos = light.getLightPos();
 			pos[2] += 0.5 * delta;
@@ -329,6 +386,7 @@ var Run = function(
 			pos[1] += 0.5 * delta;
 			light.setLightPos(pos);
 		}
+		tankControls(delta);
 	};
 };
 
