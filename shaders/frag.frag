@@ -20,7 +20,7 @@ void main()
 	vec3 N = normalize(fNormal);			// Be careful with the order of multiplication!
 	vec3 L = normalize(flight.xyz - fPosition.xyz);					// Ensure light_dir is unit length
 	float intensity = max(dot(L, N), 0.0);
-	vec4 diffuse = intensity * diffuse_colour;
+	vec4 diffuse = (intensity * vec4(lightCol, 1.0)) + intensity * diffuse_colour;
 
 	// Calculate specular lighting
 	vec4 specular_colour = vec4(lightCol, 1.0);
@@ -31,8 +31,8 @@ void main()
 
 	float distanceToLight = length(lightDir - fPosition.xyz);
 	float attenuation_kc = 1.0;
-	float attenuation_kl = 0.05;
-	float attenuation_kq = 0.001;
+	float attenuation_kl = 0.0;
+	float attenuation_kq = 0.0;
 
 	float attenuation = 1.0 / (attenuation_kc + attenuation_kl * distanceToLight + attenuation_kq * pow(distanceToLight, 2.0));
 
