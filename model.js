@@ -1,22 +1,13 @@
 class Model {
-	constructor(
-		gl,
-		modeljson,
-		texture,
-		shader,
-		scale,
-		rotation,
-		translation,
-		meshIndices
-	) {
-		this.gl = gl;
+	constructor(json) {
+		this.gl = json.gl;
 
-		this.modeljson = modeljson;
-		this.texture = texture;
+		this.modeljson = json.modeljson;
+		this.texture = json.texture;
 		this.modelTexture = null;
-		this.meshIndices = meshIndices;
+		this.meshIndices = json.meshIndices;
 
-		this.shader = shader;
+		this.shader = json.shader;
 
 		this.indicesLength = [];
 		this.indexBuffer = [];
@@ -46,12 +37,12 @@ class Model {
 		mat4.identity(this.identityMat);
 
 		// Static transforms
-		this.fRot = rotation;
+		this.fRot = json.r;
 		this.fRotMat = new Float32Array(16);
 
-		this.fscale = scale;
+		this.fscale = json.s;
 		this.fScaleMat = new Float32Array(16);
-		this.ftrans = translation;
+		this.ftrans = json.t;
 		this.fTransMat = new Float32Array(16);
 		this.rxm = mat4.create();
 		this.rym = mat4.create();
@@ -75,12 +66,16 @@ class Model {
 
 		mat4.identity(this.model);
 
-		this.modelL = gl.getUniformLocation(this.shader.getProgram(), 'model');
-
-		this.nmatrixL = gl.getUniformLocation(
-			this.shader.getProgram(),
-			'nmatrix'
-		);
+		var program = this.shader.getProgram();
+		this.gl.useProgram(program);
+		this.modelL = this.gl.getUniformLocation(program, 'model');
+		this.nmatrixL = this.gl.getUniformLocation(program, 'nmatrix');
+		this.viewL = this.gl.getUniformLocation(program, 'view');
+		this.worldL = this.gl.getUniformLocation(program, 'world');
+		this.projL = this.gl.getUniformLocation(program, 'proj');
+		this.lightColL = this.gl.getUniformLocation(program, 'lightCol');
+		this.lightDirL = this.gl.getUniformLocation(program, 'lightDir');
+		this.lightPosL = this.gl.getUniformLocation(program, 'lightPos');
 
 		this.staticTransform();
 		this.createBuffers();
@@ -241,27 +236,29 @@ class Model {
 		this.gl.activeTexture(this.gl.TEXTURE0);
 	}
 
-	bindUniforms(world) {
+	bindUniforms(world, view, proj, light) {
 		//Uniforms
 		this.gl.useProgram(this.shader.getProgram());
-		var worldL = this.gl.getUniformLocation(
-			this.shader.getProgram(),
-			'world'
-		);
-		this.gl.uniformMatrix4fv(worldL, this.gl.FALSE, world);
+
+		this.gl.uniformMatrix4fv(this.projL, this.gl.FALSE, proj);
+		this.gl.uniformMatrix4fv(this.viewL, this.gl.FALSE, view);
+		this.gl.uniformMatrix4fv(this.worldL, this.gl.FALSE, world);
+		this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
 
 		this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
 		this.gl.uniformMatrix3fv(this.nmatrixL, this.gl.FALSE, this.nmatrix3);
+
+		this.gl.uniform3fv(this.lightColL, light.getLightCol());
+		this.gl.uniform3fv(this.lightDirL, light.getLightDir());
+		this.gl.uniform3fv(this.lightPosL, light.getLightPos());
 	}
 
-	draw(world, view) {
+	draw(world, view, proj, light) {
 		mat4.fromTranslation(world, this.trans);
 
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.modelTexture);
 		this.gl.activeTexture(this.gl.TEXTURE0);
 		for (var i = 0; i < this.indexBuffer.length; i++) {
-			this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
-
 			mat4.identity(this.nmatrix4);
 			mat4.mul(this.nmatrix4, this.nmatrix4, view);
 			mat4.mul(this.nmatrix4, this.nmatrix4, world);
@@ -273,7 +270,7 @@ class Model {
 
 			this.bindArrayBuffers(i);
 			this.bindIndexBuffers(i);
-			this.bindUniforms(world);
+			this.bindUniforms(world, view, proj, light);
 
 			this.gl.drawElements(
 				this.gl.TRIANGLES,

@@ -17,15 +17,67 @@ var Init = function() {
 	var image2 = loadImage('texture2.png');
 	var vsText = loadTextResource('shaders/vert.vert');
 	var fsText = loadTextResource('shaders/frag.frag');
+	var lfsText = loadTextResource('shaders/light.frag');
 	var model = loadJSONResource('models/T34/T34.json');
 	var deer = loadJSONResource('models/lowpolydeer/deer.json');
+	var sphere = loadJSONResource('models/sphere/sphere.json');
 
-	return Promise.all([image, image2, vsText, fsText, model, deer]).then(
-		([imageR, image2R, vsTextR, fsTextR, modelR, deerR]) => {
-			Run(imageR, image2R, vsTextR, fsTextR, modelR, deerR);
+	return Promise.all([
+		image,
+		image2,
+		vsText,
+		fsText,
+		lfsText,
+		model,
+		deer,
+		sphere
+	]).then(
+		([
+			imageR,
+			image2R,
+			vsTextR,
+			fsTextR,
+			lfsTextR,
+			modelR,
+			deerR,
+			sphereR
+		]) => {
+			var canvas = document.getElementById('mycanvas');
+			var gl = canvas.getContext('webgl');
+
+			if (!gl) {
+				gl = canvas.getContext('experimental-webgl');
+			}
+
+			if (!gl) {
+				alert('Your browser does not support WebGL');
+			}
+
+			gl.clearColor(0, 0, 0, 1);
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			gl.enable(gl.DEPTH_TEST);
+			gl.enable(gl.CULL_FACE);
+			gl.frontFace(gl.CCW);
+			gl.cullFace(gl.BACK);
+
+			var shader = new Shader(gl, vsTextR, fsTextR);
+			var lightshader = new Shader(gl, vsTextR, lfsTextR);
+			Run(
+				gl,
+				imageR,
+				image2R,
+				shader,
+				lightshader,
+				modelR,
+				deerR,
+				sphereR
+			);
 		}
 	);
 };
+
+var identityMat = new Float32Array(16);
+mat4.identity(identityMat);
 
 var world = new Float32Array(16);
 var view = new Float32Array(16);
@@ -38,26 +90,33 @@ var viewUp = [0, 1, 0];
 
 var worldTrans = [0, 0, 0];
 
-var Run = function(texture, texture2, vsText, fsText, modeljson, deerjson) {
-	var canvas = document.getElementById('mycanvas');
-	var gl = canvas.getContext('webgl');
+var Run = function(
+	gl,
+	texture,
+	texture2,
+	shader,
+	lightshader,
+	modeljson,
+	deerjson,
+	spherejson
+) {
+	var s = [0.1, 0.1, 0.1];
+	var r = [0, 90, 0];
+	var t = [0, 0, 0];
 
-	if (!gl) {
-		gl = canvas.getContext('experimental-webgl');
-	}
-
-	if (!gl) {
-		alert('Your browser does not support WebGL');
-	}
-
-	gl.clearColor(0, 0, 0, 1);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	gl.enable(gl.DEPTH_TEST);
-	gl.enable(gl.CULL_FACE);
-	gl.frontFace(gl.CCW);
-	gl.cullFace(gl.BACK);
-
-	var shader = new Shader(gl, vsText, fsText);
+	var light = new Light(
+		{ colour: [1, 0, 0], direction: [1, 0, 0] },
+		{
+			gl,
+			modeljson: spherejson,
+			texture,
+			shader: lightshader,
+			s,
+			r,
+			t,
+			meshIndices: null
+		}
+	);
 
 	var s = [0.006, 0.006, 0.006];
 	var r = [0, 90, 0];
@@ -66,32 +125,47 @@ var Run = function(texture, texture2, vsText, fsText, modeljson, deerjson) {
 	var tankTop = [0, 2, 3, 7, 9, 10, 13];
 	var tankBot = [1, 4, 5, 6, 8, 11, 12, 14];
 
-	var modeltop = new Model(gl, modeljson, texture2, shader, s, r, t, tankTop);
-	var modelbot = new Model(gl, modeljson, texture2, shader, s, r, t, tankBot);
+	var modeltop = new Model({
+		gl,
+		modeljson: modeljson,
+		texture: texture2,
+		shader,
+		s,
+		r,
+		t,
+		meshIndices: tankTop
+	});
+
+	var modelbot = new Model({
+		gl,
+		modeljson: modeljson,
+		texture: texture2,
+		shader,
+		s,
+		r,
+		t,
+		meshIndices: tankBot
+	});
 
 	var s = [0.0015, 0.0015, 0.0015];
 	var r = [90, 180, 270];
 	var t = [0, -1500, 0];
-	var deer = new Model(gl, deerjson, texture, shader, s, r, t, null);
+	var deer = new Model({
+		gl,
+		modeljson: deerjson,
+		texture: texture,
+		shader,
+		s,
+		r,
+		t,
+		meshIndices: null
+	});
 
 	const fpsElem = document.querySelector('#fps');
 
 	mat4.identity(world);
 	mat4.lookAt(view, viewPos, viewLook, viewUp);
 	mat4.perspective(proj, glMatrix.toRadian(90), 1280 / 960, 0.1, 10000.0);
-
-	var mShaderProgram = modeltop.getShader().getProgram();
-	gl.useProgram(mShaderProgram);
-
-	var viewL = gl.getUniformLocation(mShaderProgram, 'view');
-	var projL = gl.getUniformLocation(mShaderProgram, 'proj');
-	var lightL = gl.getUniformLocation(mShaderProgram, 'light');
-	var lightDirL = gl.getUniformLocation(mShaderProgram, 'lightDir');
-	var lightPosL = gl.getUniformLocation(mShaderProgram, 'lightPos');
-
-	gl.uniform3f(lightL, 1, 1, 1);
-	gl.uniform3f(lightDirL, 100.0, 50.0, 150.0);
-	gl.uniform3f(lightPosL, 0.0, 10.0, -10.0);
 
 	var then = 0;
 	var draw = function(now) {
@@ -111,14 +185,12 @@ var Run = function(texture, texture2, vsText, fsText, modeljson, deerjson) {
 		gl.clearColor(0.1, 0.1, 0.1, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		gl.uniformMatrix4fv(projL, gl.FALSE, proj);
-		gl.uniformMatrix4fv(viewL, gl.FALSE, view);
+		world = identityMat;
 
-		mat4.identity(world);
-
-		modeltop.draw(world, view);
-		modelbot.draw(world, view);
-		deer.draw(world, view);
+		modeltop.draw(world, view, proj, light);
+		modelbot.draw(world, view, proj, light);
+		deer.draw(world, view, proj, light);
+		light.draw(world, view, proj, light);
 	};
 
 	var update = function(delta) {
@@ -226,6 +298,36 @@ var Run = function(texture, texture2, vsText, fsText, modeljson, deerjson) {
 			modelbot.setTrans(transbot);
 			vec3.add(transtop, transtop, temp);
 			modelbot.setTrans(transtop);
+		}
+		if (keys['T'.charCodeAt(0)]) {
+			var pos = light.getLightPos();
+			pos[2] += 0.5 * delta;
+			light.setLightPos(pos);
+		}
+		if (keys['G'.charCodeAt(0)]) {
+			var pos = light.getLightPos();
+			pos[2] -= 0.5 * delta;
+			light.setLightPos(pos);
+		}
+		if (keys['R'.charCodeAt(0)]) {
+			var pos = light.getLightPos();
+			pos[0] += 0.5 * delta;
+			light.setLightPos(pos);
+		}
+		if (keys['Y'.charCodeAt(0)]) {
+			var pos = light.getLightPos();
+			pos[0] -= 0.5 * delta;
+			light.setLightPos(pos);
+		}
+		if (keys['5'.charCodeAt(0)]) {
+			var pos = light.getLightPos();
+			pos[1] -= 0.5 * delta;
+			light.setLightPos(pos);
+		}
+		if (keys['6'.charCodeAt(0)]) {
+			var pos = light.getLightPos();
+			pos[1] += 0.5 * delta;
+			light.setLightPos(pos);
 		}
 	};
 };
