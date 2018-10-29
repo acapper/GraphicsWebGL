@@ -12,13 +12,27 @@ class Light {
 			meshIndices: model.meshIndices
 		});
 
+		this.name = light.name;
 		this.lightCol = light.colour;
 		this.lightDir = light.direction;
 		this.setLightPos(model.t);
+		this.on = light.on;
 
 		var program = this.model.getShader().getProgram();
 		this.gl.useProgram(program);
 		this.colourL = this.gl.getUniformLocation(program, 'lightcolour');
+	}
+
+	getName() {
+		return this.name;
+	}
+
+	getOn() {
+		return this.on;
+	}
+
+	setOn(on) {
+		this.on = on;
 	}
 
 	setLightCol(col) {

@@ -76,6 +76,7 @@ class Model {
 		this.lightColL = this.gl.getUniformLocation(program, 'lightCol');
 		this.lightDirL = this.gl.getUniformLocation(program, 'lightDir');
 		this.lightPosL = this.gl.getUniformLocation(program, 'lightPos');
+		this.lightOnL = this.gl.getUniformLocation(program, 'lightOn');
 
 		this.staticTransform();
 		this.createBuffers();
@@ -243,7 +244,7 @@ class Model {
 		this.gl.activeTexture(this.gl.TEXTURE0);
 	}
 
-	bindUniforms(world, view, proj, light) {
+	bindUniforms(world, view, proj, lights) {
 		//Uniforms
 		this.gl.useProgram(this.shader.getProgram());
 
@@ -255,12 +256,16 @@ class Model {
 		this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
 		this.gl.uniformMatrix3fv(this.nmatrixL, this.gl.FALSE, this.nmatrix3);
 
-		this.gl.uniform3fv(this.lightColL, light.getLightCol());
-		this.gl.uniform3fv(this.lightDirL, light.getLightDir());
-		this.gl.uniform3fv(this.lightPosL, light.getLightPos());
+		//console.log(tc);
+		//throw 'error';
+
+		this.gl.uniform3fv(this.lightColL, lights.c);
+		this.gl.uniform3fv(this.lightDirL, lights.d);
+		this.gl.uniform3fv(this.lightPosL, lights.p);
+		this.gl.uniform1iv(this.lightOnL, lights.on);
 	}
 
-	draw(world, view, proj, light) {
+	draw(world, view, proj, lights) {
 		mat4.fromTranslation(world, this.trans);
 
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.modelTexture);
@@ -277,7 +282,7 @@ class Model {
 
 			this.bindArrayBuffers(i);
 			this.bindIndexBuffers(i);
-			this.bindUniforms(world, view, proj, light);
+			this.bindUniforms(world, view, proj, lights);
 
 			this.gl.drawElements(
 				this.gl.TRIANGLES,

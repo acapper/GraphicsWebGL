@@ -90,7 +90,10 @@ var viewUp = [0, 1, 0];
 
 var worldTrans = [0, 0, 0];
 
-var bomb;
+var lights = [];
+var redLight;
+var blueLight;
+var lightsJSON;
 
 var Run = function(
 	gl,
@@ -104,10 +107,15 @@ var Run = function(
 ) {
 	var s = [0.1, 0.1, 0.1];
 	var r = [0, 90, 0];
-	var t = [0, 0, 0];
+	var t = [-3, 2, 0];
 
-	var light = new Light(
-		{ colour: [1, 1, 1], direction: [1, 0, 0] },
+	redLight = new Light(
+		{
+			name: 'red',
+			colour: [1, 0, 0],
+			direction: [1, 0, 0],
+			on: 1
+		},
 		{
 			gl,
 			modeljson: spherejson,
@@ -119,6 +127,35 @@ var Run = function(
 			meshIndices: null
 		}
 	);
+
+	var s = [0.1, 0.1, 0.1];
+	var r = [0, 90, 0];
+	var t = [3, 2, 0];
+
+	blueLight = new Light(
+		{
+			name: 'blue',
+			colour: [0, 0, 1],
+			direction: [1, 0, 0],
+			on: 1
+		},
+		{
+			gl,
+			modeljson: spherejson,
+			texture,
+			shader: lightshader,
+			s,
+			r,
+			t,
+			meshIndices: null
+		}
+	);
+
+	lights.push(blueLight);
+	$("[name='blueLight']").prop('checked', true);
+
+	lights.push(redLight);
+	$("[name='redLight']").prop('checked', true);
 
 	var s = [0.006, 0.006, 0.006];
 	var r = [0, 90, 0];
@@ -201,15 +238,20 @@ var Run = function(
 	};
 	requestAnimationFrame(draw);
 
+	lightsJSON = getLightJSON();
+
 	var render = function(delta) {
 		gl.clearColor(0.1, 0.1, 0.1, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		world = identityMat;
 
-		tank.draw(world, view, proj, light);
-		deer.draw(world, view, proj, light);
-		light.draw(world, view, proj, light);
+		tank.draw(world, view, proj, lightsJSON);
+		deer.draw(world, view, proj, lightsJSON);
+
+		lights.forEach(e => {
+			e.draw(world, view, proj, lightsJSON);
+		});
 	};
 
 	var update = function(delta) {
@@ -288,6 +330,27 @@ var Run = function(
 	};
 };
 
+var getLightJSON = function() {
+	var c = [];
+	var d = [];
+	var p = [];
+	var on = [];
+
+	lights.forEach(e => {
+		c = c.concat(e.getLightCol());
+		d = d.concat(e.getLightDir());
+		p = p.concat(e.getLightPos());
+		on = on.concat(e.getOn());
+	});
+
+	return {
+		c,
+		d,
+		p,
+		on
+	};
+};
+
 var keys = [];
 
 window.addEventListener(
@@ -306,3 +369,37 @@ window.addEventListener(
 	},
 	false
 );
+
+$("[name='redLight']").change(function() {
+	if (this.checked) {
+		lights.forEach(e => {
+			if (e.getName() == 'red') {
+				e.setOn(1);
+			}
+		});
+	} else {
+		lights.forEach(e => {
+			if (e.getName() == 'red') {
+				e.setOn(0);
+			}
+		});
+	}
+	lightsJSON = getLightJSON();
+});
+
+$("[name='blueLight']").change(function() {
+	if (this.checked) {
+		lights.forEach(e => {
+			if (e.getName() == 'blue') {
+				e.setOn(1);
+			}
+		});
+	} else {
+		lights.forEach(e => {
+			if (e.getName() == 'blue') {
+				e.setOn(0);
+			}
+		});
+	}
+	lightsJSON = getLightJSON();
+});
