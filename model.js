@@ -177,13 +177,16 @@ class Model {
 
 		this.bufferKeys.forEach(e => {
 			var location = this.gl.getAttribLocation(program, e.key);
-			this.bindArrayBuffer(
-				this.buffers[i * this.bufferKeys.length + j],
-				location,
-				e.numOfEls,
-				e.size,
-				e.offset
-			);
+			//Work on error handling for missing attribs
+			if (location != -1) {
+				this.bindArrayBuffer(
+					this.buffers[i * this.bufferKeys.length + j],
+					location,
+					e.numOfEls,
+					e.size,
+					e.offset
+				);
+			}
 			j++;
 		});
 	}
