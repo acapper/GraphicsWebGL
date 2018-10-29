@@ -186,6 +186,10 @@ class Model {
 					e.size,
 					e.offset
 				);
+			} else {
+				//console.log(e.key);
+				//console.log(this.modeljson);
+				//throw 'Error';
 			}
 			j++;
 		});
