@@ -153,7 +153,6 @@ var Run = function(
 
 	lights.push(blueLight);
 	$("[name='blueLight']").prop('checked', true);
-
 	lights.push(redLight);
 	$("[name='redLight']").prop('checked', true);
 

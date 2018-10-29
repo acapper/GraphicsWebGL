@@ -34,8 +34,8 @@ void main()
 			vec4 diffuse = (intensity * vec4(lightCol[i], 1.0)) + intensity * diffuse_colour;
 
 			// Calculate specular lighting
-			vec4 specular_colour = vec4(lightCol[1], 1.0);
-			float shininess = 3.0;							// smaller values give sharper specular responses, larger more spread out
+			vec4 specular_colour = vec4(lightCol[i], 1.0);
+			float shininess = 3.0;						// smaller values give sharper specular responses, larger more spread out
 			vec3 V = normalize(-fPosition.xyz);						// Viewing vector is reverse of vertex position in eye space
 			vec3 R = reflect(-L, N);							// Calculate the reflected beam, N defines the plane (see diagram on labsheet)
 			vec4 specular = pow(max(dot(R, V), 0.0), shininess) * specular_colour;	// Calculate specular component
@@ -47,13 +47,13 @@ void main()
 
 			float attenuation = 1.0 / (attenuation_kc + attenuation_kl * distanceToLight + attenuation_kq * pow(distanceToLight, 2.0));
 
-			totalDiffuse +=  attenuation * diffuse;
+			totalDiffuse += attenuation * diffuse;
 			totalSpec += attenuation * specular;
 		}
 	}
 
 	gl_FragColor = ambient + totalDiffuse + totalSpec;
-	//gl_FragColor = vec4(lightOn[0], 0, 0, 1.0);
+	//gl_FragColor = vec4(totalSpec.xyz, 1.0);
 	//gl_FragColor = vec4(specular.xyz, 1.0);
 	//gl_FragColor = ambient + diffuse + specular;
 	//gl_FragColor = vec4(fNormal, 1.0);
