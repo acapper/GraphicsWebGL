@@ -297,34 +297,34 @@ var Run = function(
 			mat4.lookAt(view, viewPos, viewLook, viewUp);
 		}
 		if (keys['T'.charCodeAt(0)]) {
-			var pos = light.getLightPos();
+			var pos = lights[0].getLightPos();
 			pos[2] += 0.5 * delta;
-			light.setLightPos(pos);
+			lights[0].setLightPos(pos);
 		}
 		if (keys['G'.charCodeAt(0)]) {
-			var pos = light.getLightPos();
+			var pos = lights[0].getLightPos();
 			pos[2] -= 0.5 * delta;
-			light.setLightPos(pos);
+			lights[0].setLightPos(pos);
 		}
 		if (keys['R'.charCodeAt(0)]) {
-			var pos = light.getLightPos();
+			var pos = lights[0].getLightPos();
 			pos[0] += 0.5 * delta;
-			light.setLightPos(pos);
+			lights[0].setLightPos(pos);
 		}
 		if (keys['Y'.charCodeAt(0)]) {
-			var pos = light.getLightPos();
+			var pos = lights[0].getLightPos();
 			pos[0] -= 0.5 * delta;
-			light.setLightPos(pos);
+			lights[0].setLightPos(pos);
 		}
 		if (keys['5'.charCodeAt(0)]) {
-			var pos = light.getLightPos();
+			var pos = lights[0].getLightPos();
 			pos[1] -= 0.5 * delta;
-			light.setLightPos(pos);
+			lights[0].setLightPos(pos);
 		}
 		if (keys['6'.charCodeAt(0)]) {
-			var pos = light.getLightPos();
+			var pos = lights[0].getLightPos();
 			pos[1] += 0.5 * delta;
-			light.setLightPos(pos);
+			lights[0].setLightPos(pos);
 		}
 		tank.keyboardInput(delta, keys);
 	};
