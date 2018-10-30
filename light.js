@@ -1,6 +1,6 @@
 class Light {
 	constructor(light, model) {
-		gl = model.gl;
+		var gl = model.gl;
 		this.model = new Model({
 			gl: model.gl,
 			modeljson: model.modeljson,

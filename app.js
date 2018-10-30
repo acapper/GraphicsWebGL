@@ -21,6 +21,7 @@ var Init = function() {
 	var model = loadJSONResource('models/T34/T34.json');
 	var deer = loadJSONResource('models/lowpolydeer/deer.json');
 	var sphere = loadJSONResource('models/sphere/sphere.json');
+	var bullet = loadJSONResource('models/Tank Shell/Tank Shell.json');
 
 	return Promise.all([
 		image,
@@ -30,7 +31,8 @@ var Init = function() {
 		lfsText,
 		model,
 		deer,
-		sphere
+		sphere,
+		bullet
 	]).then(
 		([
 			imageR,
@@ -40,7 +42,8 @@ var Init = function() {
 			lfsTextR,
 			modelR,
 			deerR,
-			sphereR
+			sphereR,
+			bulletR
 		]) => {
 			var canvas = document.getElementById('mycanvas');
 			var gl = canvas.getContext('webgl');
@@ -70,7 +73,8 @@ var Init = function() {
 				lightshader,
 				modelR,
 				deerR,
-				sphereR
+				sphereR,
+				bulletR
 			);
 		}
 	);
@@ -103,7 +107,8 @@ var Run = function(
 	lightshader,
 	modeljson,
 	deerjson,
-	spherejson
+	spherejson,
+	bulletjson
 ) {
 	var s = [0.1, 0.1, 0.1];
 	var r = [0, 90, 0];
@@ -163,8 +168,8 @@ var Run = function(
 	var tankTop = [0, 2, 3, 7, 9, 10, 13];
 	var tankBot = [1, 4, 5, 6, 8, 11, 12, 14];
 
-	var bs = [0.1, 0.1, 0.1];
-	var br = [0, 0, 0];
+	var bs = [0.05, 0.05, 0.05];
+	var br = [0, 0, -90];
 	var bt = [0, 0, 0];
 
 	var tank = new Tank(
@@ -189,10 +194,10 @@ var Run = function(
 			meshIndices: tankBot
 		},
 		[
-			{ colour: [1, 0.6, 0], direction: [1, 0, 0] },
+			{ name: 'blue', colour: [1, 0.6, 0], direction: [1, 0, 0], on: 0 },
 			{
 				gl,
-				modeljson: spherejson,
+				modeljson: bulletjson,
 				texture: texture,
 				shader: lightshader,
 				s: bs,
@@ -202,6 +207,8 @@ var Run = function(
 			}
 		]
 	);
+
+	lights.push(tank.getBomb());
 
 	var s = [0.0015, 0.0015, 0.0015];
 	var r = [90, 180, 270];
@@ -237,23 +244,24 @@ var Run = function(
 	};
 	requestAnimationFrame(draw);
 
-	lightsJSON = getLightJSON();
-
 	var render = function(delta) {
 		gl.clearColor(0.1, 0.1, 0.1, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		world = identityMat;
 
-		tank.draw(world, view, proj, lightsJSON);
-		deer.draw(world, view, proj, lightsJSON);
+		tank.draw(gl, world, view, proj, lightsJSON);
+		deer.draw(gl, world, view, proj, lightsJSON);
 
 		lights.forEach(e => {
-			e.draw(world, view, proj, lightsJSON);
+			if (e.getOn() && e.name != 'bomb') {
+				e.draw(gl, world, view, proj, lightsJSON);
+			}
 		});
 	};
 
 	var update = function(delta) {
+		lightsJSON = getLightJSON();
 		keyboard(delta);
 		tank.update(delta);
 		deer.update(delta);

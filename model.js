@@ -1,6 +1,6 @@
 class Model {
 	constructor(json) {
-		gl = json.gl;
+		var gl = json.gl;
 		this.modeljson = json.modeljson;
 		this.texture = json.texture;
 		this.modelTexture = null;

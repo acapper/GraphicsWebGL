@@ -107,7 +107,6 @@ class Tank {
 	fire(keys) {
 		if (!this.bombVisible) {
 			if (keys['V'.charCodeAt(0)] && !this.bombVisible) {
-				console.log('Here');
 				this.transtop = this.modeltop.getTrans();
 				this.rot = this.modeltop.getRotation();
 				this.rotf = this.modeltop.getRotationF();
