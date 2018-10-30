@@ -8,6 +8,9 @@ uniform vec3 lightCol[MAX_LIGHTS];
 uniform vec3 lightDir[MAX_LIGHTS];
 uniform vec3 lightPos[MAX_LIGHTS];
 uniform int lightOn[MAX_LIGHTS];
+uniform float attenuation_kc;
+uniform float attenuation_kl;
+uniform float attenuation_kq;
 
 varying vec2 fTexture;
 varying vec3 fNormal;
@@ -40,12 +43,10 @@ void main()
 			vec3 R = reflect(-L, N);							// Calculate the reflected beam, N defines the plane (see diagram on labsheet)
 			vec4 specular = pow(max(dot(R, V), 0.0), shininess) * specular_colour;	// Calculate specular component
 
-			float distanceToLight = length(lightDir[1] - fPosition.xyz);
-			float attenuation_kc = 1.2;
-			float attenuation_kl = 0.05;
-			float attenuation_kq = 0.05;
+			float distanceToLight = length(lightPos[i] - fPosition.xyz);
 
 			float attenuation = 1.0 / (attenuation_kc + attenuation_kl * distanceToLight + attenuation_kq * pow(distanceToLight, 2.0));
+			//float attenuation = 1.0 / pow(distanceToLight, 2.0);
 
 			totalDiffuse += attenuation * diffuse;
 			totalSpec += attenuation * specular;
