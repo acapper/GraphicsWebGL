@@ -1,6 +1,6 @@
 class Light {
 	constructor(light, model) {
-		this.gl = model.gl;
+		gl = model.gl;
 		this.model = new Model({
 			gl: model.gl,
 			modeljson: model.modeljson,
@@ -19,8 +19,8 @@ class Light {
 		this.on = light.on;
 
 		var program = this.model.getShader().getProgram();
-		this.gl.useProgram(program);
-		this.colourL = this.gl.getUniformLocation(program, 'lightcolour');
+		gl.useProgram(program);
+		this.colourL = gl.getUniformLocation(program, 'lightcolour');
 	}
 
 	getName() {
@@ -63,13 +63,13 @@ class Light {
 		return this.model;
 	}
 
-	draw(world, view, proj, light) {
-		this.gl.useProgram(
+	draw(gl, world, view, proj, light) {
+		gl.useProgram(
 			this.getModel()
 				.getShader()
 				.getProgram()
 		);
-		this.gl.uniform3fv(this.colourL, this.lightCol);
-		this.model.draw(world, view, proj, light);
+		gl.uniform3fv(this.colourL, this.lightCol);
+		this.model.draw(gl, world, view, proj, light);
 	}
 }

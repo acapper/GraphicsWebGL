@@ -1,7 +1,6 @@
 class Model {
 	constructor(json) {
-		this.gl = json.gl;
-
+		gl = json.gl;
 		this.modeljson = json.modeljson;
 		this.texture = json.texture;
 		this.modelTexture = null;
@@ -67,27 +66,30 @@ class Model {
 		mat4.identity(this.model);
 
 		var program = this.shader.getProgram();
-		this.gl.useProgram(program);
-		this.modelL = this.gl.getUniformLocation(program, 'model');
-		this.nmatrixL = this.gl.getUniformLocation(program, 'nmatrix');
-		this.viewL = this.gl.getUniformLocation(program, 'view');
-		this.worldL = this.gl.getUniformLocation(program, 'world');
-		this.projL = this.gl.getUniformLocation(program, 'proj');
-		this.lightColL = this.gl.getUniformLocation(program, 'lightCol');
-		this.lightDirL = this.gl.getUniformLocation(program, 'lightDir');
-		this.lightPosL = this.gl.getUniformLocation(program, 'lightPos');
-		this.lightOnL = this.gl.getUniformLocation(program, 'lightOn');
+		gl.useProgram(program);
+		this.modelL = gl.getUniformLocation(program, 'model');
+		this.nmatrixL = gl.getUniformLocation(program, 'nmatrix');
+		this.viewL = gl.getUniformLocation(program, 'view');
+		this.worldL = gl.getUniformLocation(program, 'world');
+		this.projL = gl.getUniformLocation(program, 'proj');
+		this.lightColL = gl.getUniformLocation(program, 'lightCol');
+		this.lightDirL = gl.getUniformLocation(program, 'lightDir');
+		this.lightPosL = gl.getUniformLocation(program, 'lightPos');
+		this.lightOnL = gl.getUniformLocation(program, 'lightOn');
+		this.attenkcL = gl.getUniformLocation(program, 'attenuation_kc');
+		this.attenklL = gl.getUniformLocation(program, 'attenuation_kl');
+		this.attenkqL = gl.getUniformLocation(program, 'attenuation_kq');
 
 		this.staticTransform();
-		this.createBuffers();
-		this.bindTexture();
+		this.createBuffers(gl);
+		this.bindTexture(gl);
 	}
 
 	getShader() {
 		return this.shader;
 	}
 
-	createBuffers() {
+	createBuffers(gl) {
 		var i = 0;
 		this.modeljson.meshes.forEach(e => {
 			if (this.meshIndices == null || this.meshIndices.indexOf(i) > -1) {
@@ -97,30 +99,34 @@ class Model {
 				var modelNormals = e.normals;
 
 				this.indicesLength.push(modelIndicies.length);
-				this.createNewIndexBuffer();
+				this.createNewIndexBuffer(gl);
 				this.bindBufferData(
+					gl,
 					this.getLastIndexBuffer(),
 					new Uint16Array(modelIndicies),
-					this.gl.ELEMENT_ARRAY_BUFFER
+					gl.ELEMENT_ARRAY_BUFFER
 				);
 
-				this.createNewBuffer();
+				this.createNewBuffer(gl);
 				this.bindBufferData(
+					gl,
 					this.getLastBuffer(),
 					new Float32Array(modelVerts),
-					this.gl.ARRAY_BUFFER
+					gl.ARRAY_BUFFER
 				);
-				this.createNewBuffer();
+				this.createNewBuffer(gl);
 				this.bindBufferData(
+					gl,
 					this.getLastBuffer(),
 					new Float32Array(modelTextureCoords),
-					this.gl.ARRAY_BUFFER
+					gl.ARRAY_BUFFER
 				);
-				this.createNewBuffer();
+				this.createNewBuffer(gl);
 				this.bindBufferData(
+					gl,
 					this.getLastBuffer(),
 					new Float32Array(modelNormals),
-					this.gl.ARRAY_BUFFER
+					gl.ARRAY_BUFFER
 				);
 			}
 			i++;
@@ -135,6 +141,10 @@ class Model {
 		return this.rot;
 	}
 
+	setRotationF(rot) {
+		this.fRot = rot;
+	}
+
 	getRotationF() {
 		return this.fRot;
 	}
@@ -147,17 +157,17 @@ class Model {
 		return this.trans;
 	}
 
-	createNewIndexBuffer() {
-		this.indexBuffer.push(this.gl.createBuffer());
+	createNewIndexBuffer(gl) {
+		this.indexBuffer.push(gl.createBuffer());
 	}
 
-	createNewBuffer() {
-		this.buffers.push(this.gl.createBuffer());
+	createNewBuffer(gl) {
+		this.buffers.push(gl.createBuffer());
 	}
 
-	bindBufferData(bufferL, data, type) {
-		this.gl.bindBuffer(type, bufferL);
-		this.gl.bufferData(type, data, this.gl.STATIC_DRAW);
+	bindBufferData(gl, bufferL, data, type) {
+		gl.bindBuffer(type, bufferL);
+		gl.bufferData(type, data, gl.STATIC_DRAW);
 	}
 
 	getLastBuffer() {
@@ -168,19 +178,20 @@ class Model {
 		return this.indexBuffer[this.indexBuffer.length - 1];
 	}
 
-	bindIndexBuffers(i) {
-		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer[i]);
+	bindIndexBuffers(gl, i) {
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer[i]);
 	}
 
-	bindArrayBuffers(i) {
+	bindArrayBuffers(gl, i) {
 		var program = this.shader.getProgram();
 		var j = 0;
 
 		this.bufferKeys.forEach(e => {
-			var location = this.gl.getAttribLocation(program, e.key);
+			var location = gl.getAttribLocation(program, e.key);
 			//Work on error handling for missing attribs
 			if (location != -1) {
 				this.bindArrayBuffer(
+					gl,
 					this.buffers[i * this.bufferKeys.length + j],
 					location,
 					e.numOfEls,
@@ -196,80 +207,68 @@ class Model {
 		});
 	}
 
-	bindArrayBuffer(vbo, attribL, numOfEls, size, offset) {
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vbo);
-		this.gl.vertexAttribPointer(
+	bindArrayBuffer(gl, vbo, attribL, numOfEls, size, offset) {
+		gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+		gl.vertexAttribPointer(
 			attribL, // Attribute location
 			numOfEls, // Number of elements per attribute
-			this.gl.FLOAT, // Type of elements
-			this.gl.FALSE,
+			gl.FLOAT, // Type of elements
+			gl.FALSE,
 			size * Float32Array.BYTES_PER_ELEMENT, // Size of an individual vertex
 			offset * Float32Array.BYTES_PER_ELEMENT // Offset from the beginning of a single vertex to this attribute
 		);
-		this.gl.enableVertexAttribArray(attribL);
+		gl.enableVertexAttribArray(attribL);
 	}
 
-	bindTexture() {
-		this.modelTexture = this.gl.createTexture();
-		this.gl.bindTexture(this.gl.TEXTURE_2D, this.modelTexture);
-		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
-		this.gl.texParameteri(
-			this.gl.TEXTURE_2D,
-			this.gl.TEXTURE_WRAP_S,
-			this.gl.CLAMP_TO_EDGE
-		);
-		this.gl.texParameteri(
-			this.gl.TEXTURE_2D,
-			this.gl.TEXTURE_WRAP_T,
-			this.gl.CLAMP_TO_EDGE
-		);
-		this.gl.texParameteri(
-			this.gl.TEXTURE_2D,
-			this.gl.TEXTURE_MIN_FILTER,
-			this.gl.LINEAR
-		);
-		this.gl.texParameteri(
-			this.gl.TEXTURE_2D,
-			this.gl.TEXTURE_MAG_FILTER,
-			this.gl.LINEAR
-		);
-		this.gl.texImage2D(
-			this.gl.TEXTURE_2D,
+	bindTexture(gl) {
+		this.modelTexture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, this.modelTexture);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texImage2D(
+			gl.TEXTURE_2D,
 			0,
-			this.gl.RGBA,
-			this.gl.RGBA,
-			this.gl.UNSIGNED_BYTE,
+			gl.RGBA,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
 			this.texture
 		);
-		this.gl.activeTexture(this.gl.TEXTURE0);
+		gl.activeTexture(gl.TEXTURE0);
 	}
 
-	bindUniforms(world, view, proj, lights) {
+	bindUniforms(gl, world, view, proj, lights) {
 		//Uniforms
-		this.gl.useProgram(this.shader.getProgram());
+		gl.useProgram(this.shader.getProgram());
 
-		this.gl.uniformMatrix4fv(this.projL, this.gl.FALSE, proj);
-		this.gl.uniformMatrix4fv(this.viewL, this.gl.FALSE, view);
-		this.gl.uniformMatrix4fv(this.worldL, this.gl.FALSE, world);
-		this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
+		gl.uniformMatrix4fv(this.projL, gl.FALSE, proj);
+		gl.uniformMatrix4fv(this.viewL, gl.FALSE, view);
+		gl.uniformMatrix4fv(this.worldL, gl.FALSE, world);
+		gl.uniformMatrix4fv(this.modelL, gl.FALSE, this.model);
 
-		this.gl.uniformMatrix4fv(this.modelL, this.gl.FALSE, this.model);
-		this.gl.uniformMatrix3fv(this.nmatrixL, this.gl.FALSE, this.nmatrix3);
+		gl.uniformMatrix4fv(this.modelL, gl.FALSE, this.model);
+		gl.uniformMatrix3fv(this.nmatrixL, gl.FALSE, this.nmatrix3);
 
 		//console.log(tc);
 		//throw 'error';
 
-		this.gl.uniform3fv(this.lightColL, lights.c);
-		this.gl.uniform3fv(this.lightDirL, lights.d);
-		this.gl.uniform3fv(this.lightPosL, lights.p);
-		this.gl.uniform1iv(this.lightOnL, lights.on);
+		gl.uniform3fv(this.lightColL, lights.c);
+		gl.uniform3fv(this.lightDirL, lights.d);
+		gl.uniform3fv(this.lightPosL, lights.p);
+		gl.uniform1iv(this.lightOnL, lights.on);
+
+		gl.uniform1f(this.attenkcL, 1.0);
+		gl.uniform1f(this.attenklL, 0.05);
+		gl.uniform1f(this.attenkqL, 0.05);
 	}
 
-	draw(world, view, proj, lights) {
+	draw(gl, world, view, proj, lights) {
 		mat4.fromTranslation(world, this.trans);
 
-		this.gl.bindTexture(this.gl.TEXTURE_2D, this.modelTexture);
-		this.gl.activeTexture(this.gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.modelTexture);
+		gl.activeTexture(gl.TEXTURE0);
 		for (var i = 0; i < this.indexBuffer.length; i++) {
 			mat4.identity(this.nmatrix4);
 			mat4.mul(this.nmatrix4, this.nmatrix4, view);
@@ -280,14 +279,14 @@ class Model {
 			mat3.invert(this.nmatrix3, this.nmatrix3);
 			mat3.transpose(this.nmatrix3, this.nmatrix3);
 
-			this.bindArrayBuffers(i);
-			this.bindIndexBuffers(i);
-			this.bindUniforms(world, view, proj, lights);
+			this.bindArrayBuffers(gl, i);
+			this.bindIndexBuffers(gl, i);
+			this.bindUniforms(gl, world, view, proj, lights);
 
-			this.gl.drawElements(
-				this.gl.TRIANGLES,
+			gl.drawElements(
+				gl.TRIANGLES,
 				this.indicesLength[i],
-				this.gl.UNSIGNED_SHORT,
+				gl.UNSIGNED_SHORT,
 				0
 			);
 		}
