@@ -21,13 +21,18 @@ class Tank {
 		this.bombMoving = false;
 		this.bombDirection = [0, 0, 0];
 		this.bombTrans = this.bomb.getModel().getTrans();
-		this.bombSpeed = 3;
+		this.bombSpeed = 10;
+		//this.bombSpeed = 0;
+	}
+
+	getBomb() {
+		return this.bomb;
 	}
 
 	keyboardInput(delta, keys) {
 		this.move(delta, keys);
 		this.rotate(delta, keys);
-		this.fire(delta, keys);
+		this.fire(keys);
 	}
 
 	rotate(delta, keys) {
@@ -99,32 +104,38 @@ class Tank {
 		this.modelbot.setTrans(this.transtop);
 	}
 
-	fire(delta, keys) {
-		if (keys['V'.charCodeAt(0)] && !this.bombVisible) {
-			this.transtop = this.modeltop.getTrans();
-			this.rot = this.modeltop.getRotation();
-			this.rotf = this.modeltop.getRotationF();
-			this.forward = [
-				Math.sin(glMatrix.toRadian(this.rot[1] + this.rotf[1])),
-				1,
-				Math.cos(glMatrix.toRadian(this.rot[1] + this.rotf[1]))
-			];
-			this.bomb
-				.getModel()
-				.setTrans([
-					this.transtop[0] + 3 * this.forward[0] - 3,
-					1.36,
-					this.transtop[2] + 3 * this.forward[2]
-				]);
-			this.bomb.getModel().setRotation([0, 10, 0]);
-			this.bombVisible = true;
+	fire(keys) {
+		if (!this.bombVisible) {
+			if (keys['V'.charCodeAt(0)] && !this.bombVisible) {
+				console.log('Here');
+				this.transtop = this.modeltop.getTrans();
+				this.rot = this.modeltop.getRotation();
+				this.rotf = this.modeltop.getRotationF();
+				this.forward = [
+					Math.sin(glMatrix.toRadian(this.rot[1] + this.rotf[1])),
+					1,
+					Math.cos(glMatrix.toRadian(this.rot[1] + this.rotf[1]))
+				];
+				this.bomb
+					.getModel()
+					.setTrans([
+						this.transtop[0] + 3 * this.forward[0] - 2.87,
+						1.36,
+						this.transtop[2] + 3 * this.forward[2]
+					]);
+				this.bomb.getModel().setRotation([-this.rot[1], 0, 0]);
+				this.bombVisible = true;
 
-			var that = this;
-			this.bombDirection = this.forward;
-			this.bombMoving = true;
-			setTimeout(function() {
-				that.hideBomb();
-			}, 3000);
+				var that = this;
+				this.bombDirection = this.forward;
+				this.bombMoving = true;
+				this.bomb.setOn(1);
+				setTimeout(function() {
+					that.getBomb().setOn(0);
+					that.hideBomb();
+					that = null;
+				}, 1500);
+			}
 		}
 	}
 
@@ -133,17 +144,18 @@ class Tank {
 		this.bombMoving = false;
 	}
 
-	draw(world, view, proj, light) {
-		this.modeltop.draw(world, view, proj, light);
-		this.modelbot.draw(world, view, proj, light);
+	draw(gl, world, view, proj, light) {
+		this.modeltop.draw(gl, world, view, proj, light);
+		this.modelbot.draw(gl, world, view, proj, light);
 		if (this.bombVisible) {
-			this.bomb.draw(world, view, proj, light);
+			this.bomb.draw(gl, world, view, proj, light);
 		}
 	}
 
 	update(delta) {
 		this.modeltop.update(delta);
 		this.modelbot.update(delta);
+		this.bomb.getModel().update(delta);
 		if (this.bombMoving) {
 			this.bombTrans = this.bomb.getModel().getTrans();
 			this.bomb
