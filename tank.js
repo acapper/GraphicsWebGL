@@ -61,7 +61,7 @@ class Tank {
 		this.bombVisible = false;
 		this.bombDirection = [0, 0, 0];
 		this.fired = false;
-		this.bombSpeed = 50;
+		this.bombSpeed = 30;
 		this.bombPos = this.bomb.getTranslation();
 		this.bombRot = this.bomb.getRotation();
 	}
