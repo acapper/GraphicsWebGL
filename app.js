@@ -15,17 +15,19 @@ var readTextFile = function(file, call) {
 var Init = function() {
 	var image = loadImage('texture.png');
 	var image2 = loadImage('texture2.png');
+	var image3 = loadImage('texture3.png');
 	var vsText = loadTextResource('shaders/vert.vert');
 	var fsText = loadTextResource('shaders/frag.frag');
 	var lfsText = loadTextResource('shaders/light.frag');
 	var model = loadJSONResource('models/T34/T34.json');
 	var deer = loadJSONResource('models/lowpolydeer/deer.json');
 	var sphere = loadJSONResource('models/sphere/sphere.json');
-	var bullet = loadJSONResource('models/Tank Shell/Tank shell.json');
+	var bullet = loadJSONResource('models/TankShell/TankShell.json');
 
 	Promise.all([
 		image,
 		image2,
+		image3,
 		vsText,
 		fsText,
 		lfsText,
@@ -37,6 +39,7 @@ var Init = function() {
 		([
 			imageR,
 			image2R,
+			image3R,
 			vsTextR,
 			fsTextR,
 			lfsTextR,
@@ -69,6 +72,7 @@ var Init = function() {
 				gl,
 				imageR,
 				image2R,
+				image3R,
 				shader,
 				lightshader,
 				modelR,
@@ -110,6 +114,7 @@ var Run = function(
 	glContext,
 	texture,
 	texture2,
+	texture3,
 	shader,
 	lightshader,
 	modeljson,
@@ -209,8 +214,8 @@ var Run = function(
 			{
 				gl,
 				modeljson: bulletjson,
-				texture: texture,
-				shader: lightshader,
+				texture: texture3,
+				shader: shader,
 				s: bs,
 				r: br,
 				t: bt,
