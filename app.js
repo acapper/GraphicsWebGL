@@ -23,7 +23,7 @@ var Init = function() {
 	var sphere = loadJSONResource('models/sphere/sphere.json');
 	var bullet = loadJSONResource('models/Tank Shell/Tank Shell.json');
 
-	return Promise.all([
+	Promise.all([
 		image,
 		image2,
 		vsText,
@@ -87,9 +87,8 @@ var world = new Float32Array(16);
 var view = new Float32Array(16);
 var proj = new Float32Array(16);
 var temp = new Float32Array(16);
-
-var viewPos = [0, 3, -4];
-var viewLook = [0, 0, 0];
+var viewPos = [-3, 4, -5];
+var viewLook = [-3, 0, 0];
 var viewUp = [0, 1, 0];
 
 var worldTrans = [0, 0, 0];
@@ -99,8 +98,16 @@ var redLight;
 var blueLight;
 var lightsJSON;
 
+var tank;
+var deer;
+
+var camera;
+var gl;
+
+const fpsElem = document.querySelector('#fps');
+
 var Run = function(
-	gl,
+	glContext,
 	texture,
 	texture2,
 	shader,
@@ -110,6 +117,9 @@ var Run = function(
 	spherejson,
 	bulletjson
 ) {
+	gl = glContext;
+	glContext = null;
+
 	var s = [0.1, 0.1, 0.1];
 	var r = [0, 90, 0];
 	var t = [-3, 2, 0];
@@ -155,6 +165,7 @@ var Run = function(
 			meshIndices: null
 		}
 	);
+	spherejson = null;
 
 	lights.push(blueLight);
 	$("[name='blueLight']").prop('checked', true);
@@ -172,7 +183,7 @@ var Run = function(
 	var br = [0, 0, -90];
 	var bt = [0, 0, 0];
 
-	var tank = new Tank(
+	tank = new Tank(
 		{
 			gl,
 			modeljson: modeljson,
@@ -207,13 +218,15 @@ var Run = function(
 			}
 		]
 	);
+	modeljson = null;
+	bulletjson = null;
 
 	lights.push(tank.getBomb());
 
 	var s = [0.0015, 0.0015, 0.0015];
 	var r = [90, 180, 270];
 	var t = [0, -2, 0];
-	var deer = new Model({
+	deer = new Model({
 		gl,
 		modeljson: deerjson,
 		texture: texture,
@@ -223,125 +236,138 @@ var Run = function(
 		t,
 		meshIndices: null
 	});
+	deerjson = null;
 
-	const fpsElem = document.querySelector('#fps');
+	shader = null;
+	lightshader = null;
+
+	camera = new Camera({
+		viewPos: viewPos,
+		viewLook: viewLook,
+		viewUp: viewUp
+	});
 
 	mat4.identity(world);
-	mat4.lookAt(view, viewPos, viewLook, viewUp);
+	view = camera.getCameraMat();
 	mat4.perspective(proj, glMatrix.toRadian(90), 1280 / 960, 0.1, 10000.0);
 
-	var then = 0;
-	var draw = function(now) {
-		now *= 0.001; // convert to seconds
-		const deltaTime = now - then; // compute time since last frame
-		then = now; // remember time for next frame
-		const fps = 1 / deltaTime; // compute frames per second
-		fpsElem.textContent = fps.toFixed(1); // update fps display
-
-		update(deltaTime);
-		render(deltaTime);
-		requestAnimationFrame(draw);
-	};
 	requestAnimationFrame(draw);
-
-	var render = function(delta) {
-		gl.clearColor(0.1, 0.1, 0.1, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-		world = identityMat;
-
-		tank.draw(gl, world, view, proj, lightsJSON);
-		deer.draw(gl, world, view, proj, lightsJSON);
-
-		lights.forEach(e => {
-			if (e.getOn() && e.name != 'bomb') {
-				e.draw(gl, world, view, proj, lightsJSON);
-			}
-		});
-	};
-
-	var update = function(delta) {
-		lightsJSON = getLightJSON();
-		keyboard(delta);
-		tank.update(delta);
-		deer.update(delta);
-	};
-
-	var keyboard = function(delta) {
-		if (keys['U'.charCodeAt(0)]) {
-			viewPos[2] += 0.5 * delta;
-			viewLook[2] += 0.5 * delta;
-			mat4.lookAt(view, viewPos, viewLook, viewUp);
-		}
-		if (keys['J'.charCodeAt(0)]) {
-			viewPos[2] -= 0.5 * delta;
-			viewLook[2] -= 0.5 * delta;
-			mat4.lookAt(view, viewPos, viewLook, viewUp);
-		}
-		if (keys['H'.charCodeAt(0)]) {
-			viewPos[0] += 0.5 * delta;
-			viewLook[0] += 0.5 * delta;
-			mat4.lookAt(view, viewPos, viewLook, viewUp);
-		}
-		if (keys['K'.charCodeAt(0)]) {
-			viewPos[0] -= 0.5 * delta;
-			viewLook[0] -= 0.5 * delta;
-			mat4.lookAt(view, viewPos, viewLook, viewUp);
-		}
-		if (keys['O'.charCodeAt(0)]) {
-			viewPos[1] += 0.5 * delta;
-			viewLook[1] += 0.5 * delta;
-			mat4.lookAt(view, viewPos, viewLook, viewUp);
-		}
-		if (keys['L'.charCodeAt(0)]) {
-			viewPos[1] -= 0.5 * delta;
-			viewLook[1] -= 0.5 * delta;
-			mat4.lookAt(view, viewPos, viewLook, viewUp);
-		}
-		if (keys['M'.charCodeAt(0)]) {
-			viewPos = [0, 3, -4];
-			viewLook = [0, 0, 0];
-			mat4.lookAt(view, viewPos, viewLook, viewUp);
-		}
-		if (keys['T'.charCodeAt(0)]) {
-			var pos = lights[0].getLightPos();
-			pos[2] += 0.5 * delta;
-			lights[0].setLightPos(pos);
-		}
-		if (keys['G'.charCodeAt(0)]) {
-			var pos = lights[0].getLightPos();
-			pos[2] -= 0.5 * delta;
-			lights[0].setLightPos(pos);
-		}
-		if (keys['R'.charCodeAt(0)]) {
-			var pos = lights[0].getLightPos();
-			pos[0] += 0.5 * delta;
-			lights[0].setLightPos(pos);
-		}
-		if (keys['Y'.charCodeAt(0)]) {
-			var pos = lights[0].getLightPos();
-			pos[0] -= 0.5 * delta;
-			lights[0].setLightPos(pos);
-		}
-		if (keys['5'.charCodeAt(0)]) {
-			var pos = lights[0].getLightPos();
-			pos[1] -= 0.5 * delta;
-			lights[0].setLightPos(pos);
-		}
-		if (keys['6'.charCodeAt(0)]) {
-			var pos = lights[0].getLightPos();
-			pos[1] += 0.5 * delta;
-			lights[0].setLightPos(pos);
-		}
-		tank.keyboardInput(delta, keys);
-	};
 };
 
+var then = 0;
+var draw = function(now) {
+	now *= 0.001; // convert to seconds
+	const deltaTime = now - then; // compute time since last frame
+	then = now; // remember time for next frame
+	const fps = 1 / deltaTime; // compute frames per second
+	fpsElem.textContent = fps.toFixed(1); // update fps display
+
+	update(deltaTime);
+	render(deltaTime);
+	requestAnimationFrame(draw);
+	now = null;
+};
+
+var render = function(delta) {
+	gl.clearColor(0.1, 0.1, 0.1, 1);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	world = identityMat;
+
+	tank.draw(gl, world, view, proj, lightsJSON);
+	deer.draw(gl, world, view, proj, lightsJSON);
+
+	lights.forEach(e => {
+		if (e.getOn() && e.name != 'bomb') {
+			e.draw(gl, world, view, proj, lightsJSON);
+		}
+	});
+	delta = null;
+};
+
+var update = function(delta) {
+	lightsJSON = getLightJSON();
+	keyboard(delta);
+	tank.update(delta);
+	deer.update(delta);
+	delta = null;
+};
+
+var camrot = 0.5;
+
+var keyboard = function(delta) {
+	var cameraTrans = [0, 0, 0];
+	if (keys['U'.charCodeAt(0)]) {
+		cameraTrans[2] += 0.5 * delta;
+	}
+	if (keys['J'.charCodeAt(0)]) {
+		cameraTrans[2] -= 0.5 * delta;
+	}
+	if (keys['H'.charCodeAt(0)]) {
+		cameraTrans[0] += 0.5 * delta;
+	}
+	if (keys['K'.charCodeAt(0)]) {
+		cameraTrans[0] -= 0.5 * delta;
+	}
+	if (keys['O'.charCodeAt(0)]) {
+		cameraTrans[1] += 0.5 * delta;
+	}
+	if (keys['L'.charCodeAt(0)]) {
+		cameraTrans[1] -= 0.5 * delta;
+	}
+	if (keys['M'.charCodeAt(0)]) {
+		camera = new Camera({
+			viewPos: viewPos,
+			viewLook: viewLook,
+			viewUp: viewUp
+		});
+	}
+	camera.transCamera(cameraTrans);
+	camera.rotateViewPos([0, camrot * delta, 0]);
+	//camera.rotateCameraAroundLookAt([0, camrot, 0]);
+	view = camera.getCameraMat();
+	if (keys['T'.charCodeAt(0)]) {
+		var pos = lights[0].getLightPos();
+		pos[2] += 0.5 * delta;
+		lights[0].setLightPos(pos);
+	}
+	if (keys['G'.charCodeAt(0)]) {
+		var pos = lights[0].getLightPos();
+		pos[2] -= 0.5 * delta;
+		lights[0].setLightPos(pos);
+	}
+	if (keys['R'.charCodeAt(0)]) {
+		var pos = lights[0].getLightPos();
+		pos[0] += 0.5 * delta;
+		lights[0].setLightPos(pos);
+	}
+	if (keys['Y'.charCodeAt(0)]) {
+		var pos = lights[0].getLightPos();
+		pos[0] -= 0.5 * delta;
+		lights[0].setLightPos(pos);
+	}
+	if (keys['5'.charCodeAt(0)]) {
+		var pos = lights[0].getLightPos();
+		pos[1] -= 0.5 * delta;
+		lights[0].setLightPos(pos);
+	}
+	if (keys['6'.charCodeAt(0)]) {
+		var pos = lights[0].getLightPos();
+		pos[1] += 0.5 * delta;
+		lights[0].setLightPos(pos);
+	}
+	tank.keyboardInput(delta, keys);
+};
+var c = [];
+var d = [];
+var p = [];
+var on = [];
+
 var getLightJSON = function() {
-	var c = [];
-	var d = [];
-	var p = [];
-	var on = [];
+	c = [];
+	d = [];
+	p = [];
+	on = [];
 
 	lights.forEach(e => {
 		c = c.concat(e.getLightCol());
