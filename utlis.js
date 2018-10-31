@@ -22,9 +22,12 @@ var loadTextResource = function(url) {
 var loadImage = function(url) {
 	return new Promise(function(resolve) {
 		var image = new Image();
-		image.onload = function() {
+		image.onload = () => {
 			url = null;
 			resolve(image);
+		};
+		image.onerror = e => {
+			console.log(e);
 		};
 		image.src = url;
 	});
@@ -42,4 +45,31 @@ var loadJSONResource = function(url) {
 			}
 		});
 	});
+};
+
+var loadAll = function(names) {
+	var re = /(?:\.([^.]+))?$/;
+	var proms = [];
+	names.forEach(element => {
+		var ext = re.exec(element)[1];
+		switch (ext) {
+			case 'txt':
+			case 'vert':
+			case 'frag':
+				proms.push(loadTextResource(element));
+				break;
+			case 'jpg':
+			case 'png':
+				proms.push(loadImage(element));
+				break;
+			case 'json':
+				proms.push(loadJSONResource(element));
+				break;
+
+			default:
+				console.log('Unexpected file type');
+		}
+	});
+	re = null;
+	return proms;
 };
