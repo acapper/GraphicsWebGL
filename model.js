@@ -1,15 +1,14 @@
 class Model {
-	constructor(json) {
-		var gl = json.gl;
-		this.texture = json.texture;
-		this.modelTexture = null;
-		this.meshIndices = json.meshIndices;
-
-		this.shader = json.shader;
-
-		this.indicesLength = [];
-		this.indexBuffer = [];
-		this.buffers = [];
+	/*{
+		gl,
+		texture: texture,
+		model: spherejson,
+		shader: shader,
+		rotation: [0, 0, 0],
+		scale: [0, 0, 0],
+		translation: [0, 0, 0]
+	};*/
+	constructor(model) {
 		this.bufferKeys = [
 			{
 				key: 'position',
@@ -31,46 +30,30 @@ class Model {
 			}
 		];
 
-		this.identityMat = new Float32Array(16);
-		mat4.identity(this.identityMat);
+		this.meshIndices = model.meshIndices;
+		this.texture = model.texture;
+		this.glTexture = null;
+		this.shader = model.shader;
+		this.rotation = model.rotation;
+		this.scale = model.scale;
+		this.translation = model.translation;
 
-		// Static transforms
-		this.fRot = json.r;
-		this.fRotMat = new Float32Array(16);
+		this.indicesLength = [];
+		this.indexBuffer = [];
+		this.buffers = [];
 
-		this.fscale = json.s;
-		this.fScaleMat = new Float32Array(16);
-		this.ftrans = json.t;
-		this.fTransMat = new Float32Array(16);
-		this.rxm = mat4.create();
-		this.rym = mat4.create();
-		this.rzm = mat4.create();
-
-		// Dynamic transforms
-		this.rot = [0, 0, 0];
-		this.rotMat = new Float32Array(16);
-
-		this.scale = [1, 1, 1];
-		this.scaleMat = new Float32Array(16);
-
-		this.trans = [0, 0, 0];
-		this.transMat = new Float32Array(16);
-
-		// Uniform matrices
-		this.model = new Float32Array(16);
-
-		this.nmatrix4 = new Float32Array(16);
-		this.nmatrix3 = new Float32Array(9);
-
-		mat4.identity(this.model);
+		this.model = mat4.create();
+		this.nmatrix4 = mat4.create();
+		this.nmatrix3 = mat3.create();
 
 		var program = this.shader.getProgram();
+		//Move to shader code
 		gl.useProgram(program);
-		this.modelL = gl.getUniformLocation(program, 'model');
 		this.nmatrixL = gl.getUniformLocation(program, 'nmatrix');
 		this.viewL = gl.getUniformLocation(program, 'view');
 		this.worldL = gl.getUniformLocation(program, 'world');
 		this.projL = gl.getUniformLocation(program, 'proj');
+		this.modelL = gl.getUniformLocation(program, 'model');
 		this.lightColL = gl.getUniformLocation(program, 'lightCol');
 		this.lightDirL = gl.getUniformLocation(program, 'lightDir');
 		this.lightPosL = gl.getUniformLocation(program, 'lightPos');
@@ -79,20 +62,13 @@ class Model {
 		this.attenklL = gl.getUniformLocation(program, 'attenuation_kl');
 		this.attenkqL = gl.getUniformLocation(program, 'attenuation_kq');
 
-		this.staticTransform();
-		this.createBuffers(gl, json.modeljson);
+		this.createBuffers(gl, model.model);
 		this.bindTexture(gl);
-		program = null;
-		gl = null;
 	}
 
-	getShader() {
-		return this.shader;
-	}
-
-	createBuffers(gl, modeljson) {
+	createBuffers(gl, model) {
 		var i = 0;
-		modeljson.meshes.forEach(e => {
+		model.meshes.forEach(e => {
 			if (this.meshIndices == null || this.meshIndices.indexOf(i) > -1) {
 				var modelIndicies = [].concat.apply([], e.faces);
 				var modelVerts = e.vertices;
@@ -133,35 +109,7 @@ class Model {
 			i++;
 		});
 		gl = null;
-		modeljson = null;
-	}
-
-	setRotation(rot) {
-		this.rot = rot;
-	}
-
-	getRotation() {
-		return this.rot;
-	}
-
-	setRotationF(rot) {
-		this.fRot = rot;
-	}
-
-	getRotationF() {
-		return this.fRot;
-	}
-
-	setTrans(trans) {
-		this.trans = trans;
-	}
-
-	getTrans() {
-		return this.trans;
-	}
-
-	getTransF() {
-		return this.trans;
+		model = null;
 	}
 
 	createNewIndexBuffer(gl) {
@@ -263,20 +211,14 @@ class Model {
 		gl = null;
 	}
 
-	bindUniforms(gl, world, view, proj, lights) {
+	bindUniforms(gl, world, model, view, proj, lights) {
 		//Uniforms
-		gl.useProgram(this.shader.getProgram());
-
 		gl.uniformMatrix4fv(this.projL, gl.FALSE, proj);
 		gl.uniformMatrix4fv(this.viewL, gl.FALSE, view);
 		gl.uniformMatrix4fv(this.worldL, gl.FALSE, world);
-		gl.uniformMatrix4fv(this.modelL, gl.FALSE, this.model);
+		gl.uniformMatrix4fv(this.modelL, gl.FALSE, model);
 
-		gl.uniformMatrix4fv(this.modelL, gl.FALSE, this.model);
 		gl.uniformMatrix3fv(this.nmatrixL, gl.FALSE, this.nmatrix3);
-
-		//console.log(tc);
-		//throw 'error';
 
 		gl.uniform3fv(this.lightColL, lights.c);
 		gl.uniform3fv(this.lightDirL, lights.d);
@@ -294,8 +236,7 @@ class Model {
 	}
 
 	draw(gl, world, view, proj, lights) {
-		mat4.fromTranslation(world, this.trans);
-
+		gl.useProgram(this.shader.getProgram());
 		gl.bindTexture(gl.TEXTURE_2D, this.modelTexture);
 		gl.activeTexture(gl.TEXTURE0);
 		for (var i = 0; i < this.indexBuffer.length; i++) {
@@ -310,7 +251,7 @@ class Model {
 
 			this.bindArrayBuffers(gl, i);
 			this.bindIndexBuffers(gl, i);
-			this.bindUniforms(gl, world, view, proj, lights);
+			this.bindUniforms(gl, world, this.model, view, proj, lights);
 
 			gl.drawElements(
 				gl.TRIANGLES,
@@ -326,70 +267,12 @@ class Model {
 		lights = null;
 	}
 
-	update(delta) {
-		this.transform();
-		delta = null;
-	}
-
-	transform() {
-		mat4.mul(this.model, this.identityMat, this.identityMat);
-
-		this.staticTransform();
-		this.dynamicTransform();
-	}
-
-	staticTransform() {
-		this.model = this.transformModel(
+	update() {
+		this.model = mat4FromRotTransScale(
 			this.model,
-			this.fscale,
-			this.fScaleMat,
-			this.fRot,
-			this.fRotMat,
-			this.ftrans,
-			this.fTransMat
+			this.rotation,
+			this.translation,
+			this.scale
 		);
-	}
-
-	dynamicTransform() {
-		this.model = this.transformModel(
-			this.model,
-			this.scale,
-			this.scaleMat,
-			this.rot,
-			this.rotMat,
-			this.trans,
-			this.transMat
-		);
-	}
-
-	transformModel(model, scale, scaleMat, rot, rotMat, trans, transMat) {
-		// Rotate
-		rotMat = this.rotateMat(
-			rotMat,
-			glMatrix.toRadian(rot[0]),
-			glMatrix.toRadian(rot[1]),
-			glMatrix.toRadian(rot[2])
-		);
-		mat4.mul(model, model, rotMat);
-
-		// Translate
-		mat4.fromTranslation(transMat, trans);
-		mat4.mul(model, model, transMat);
-
-		// Scale
-		mat4.fromScaling(scaleMat, scale);
-		mat4.mul(model, model, scaleMat);
-		return model;
-	}
-
-	rotateMat(mat, rxa, rya, rza) {
-		mat4.fromRotation(this.rxm, rxa, [1, 0, 0]);
-		mat4.fromRotation(this.rym, rya, [0, 1, 0]);
-		mat4.fromRotation(this.rzm, rza, [0, 0, 1]);
-		mat4.mul(mat, this.identityMat, this.identityMat);
-		mat4.mul(mat, mat, this.rxm);
-		mat4.mul(mat, mat, this.rym);
-		mat4.mul(mat, mat, this.rzm);
-		return mat;
 	}
 }
