@@ -9,7 +9,7 @@ class Tank {
 		this.rotbot = this.modelbot.getRotation();
 		this.rotf = this.modeltop.getRotationF();
 		this.transtop = this.modeltop.getTrans();
-		this.transtop = this.modeltop.getTrans();
+		this.transbot = this.modelbot.getTrans();
 		this.temp = vec3.create();
 		this.forward = [
 			Math.sin(glMatrix.toRadian(this.rottop[1] + this.rotf[1])),
@@ -26,6 +26,14 @@ class Tank {
 		top = null;
 		bot = null;
 		bomb = null;
+	}
+
+	getPosition() {
+		return this.modelbot.getTrans();
+	}
+
+	getRotation() {
+		return this.modelbot.getRotation();
 	}
 
 	getBomb() {
@@ -106,7 +114,6 @@ class Tank {
 	}
 
 	moveForward(d) {
-		//IMPROVE use homogeneous coordinates and make rotation mat
 		this.rot = this.modelbot.getRotation();
 		this.rotf = this.modelbot.getRotationF();
 		this.forward = [
@@ -129,7 +136,6 @@ class Tank {
 	fire(keys) {
 		if (!this.bombVisible) {
 			if (keys['V'.charCodeAt(0)] && !this.bombVisible) {
-				//IMPROVE use homogeneous coordinates and make rotation mat
 				this.transtop = this.modeltop.getTrans();
 				this.rot = this.modeltop.getRotation();
 				this.rotf = this.modeltop.getRotationF();
