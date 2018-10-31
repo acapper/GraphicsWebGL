@@ -87,7 +87,7 @@ var world = new Float32Array(16);
 var view = new Float32Array(16);
 var proj = new Float32Array(16);
 var temp = new Float32Array(16);
-var viewPos = [-3, 4, -5];
+var viewPos = [-8, 3, 0];
 var viewLook = [-3, 0, 0];
 var viewUp = [0, 1, 0];
 
@@ -205,7 +205,7 @@ var Run = function(
 			meshIndices: tankBot
 		},
 		[
-			{ name: 'blue', colour: [1, 0.6, 0], direction: [1, 0, 0], on: 0 },
+			{ name: 'bomb', colour: [1, 0.6, 0], direction: [1, 0, 0], on: 0 },
 			{
 				gl,
 				modeljson: bulletjson,
@@ -297,8 +297,8 @@ var camrot = 0.5;
 
 var keyboard = function(delta) {
 	var cameraTrans = [0, 0, 0];
-	if (keys['U'.charCodeAt(0)]) {
-		cameraTrans[2] += 0.5 * delta;
+	if (keys['W'.charCodeAt(0)] || keys['S'.charCodeAt(0)]) {
+		camera.move(tank.getPosition());
 	}
 	if (keys['J'.charCodeAt(0)]) {
 		cameraTrans[2] -= 0.5 * delta;
@@ -323,8 +323,8 @@ var keyboard = function(delta) {
 		});
 	}
 	camera.transCamera(cameraTrans);
-	camera.rotateViewPos([0, camrot * delta, 0]);
-	//camera.rotateCameraAroundLookAt([0, camrot, 0]);
+	//camera.rotateViewPos([0, camrot * delta, 0]);
+	camera.rotateLookAt([0, 0, 0]);
 	view = camera.getCameraMat();
 	if (keys['T'.charCodeAt(0)]) {
 		var pos = lights[0].getLightPos();
