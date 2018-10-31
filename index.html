@@ -18,6 +18,7 @@
 <body onload="Init();">
 	<div>fps: <span id="fps"></span></div>
 	<h1>Controls</h1>
+	<h2>Tank</h2>
 	<ul>
 		<li>Rotate top CW: E</li>
 		<li>Rotate top CCW: Q</li>
@@ -25,12 +26,39 @@
 		<li>Rotate bot CCW: A</li>
 		<li>Move tank forwards: W</li>
 		<li>Move tank backwards: S</li>
+		<li>Fire Tank: V</li>
+	</ul>
+	<h2>Camera Position</h2>
+	<ul>
+		<li>Reset: M</li>
+		<li>Move +Z: U</li>
+		<li>Move -Z: J</li>
+		<li>Move -X: H</li>
+		<li>Move +X: K</li>
+		<li>Move Down: L</li>
+		<li>Move Up: O</li>
+		<li>Rotate +Y: I</li>
+		<li>Rotate -Y: Y</li>
+	</ul>
+	<h2>Light</h2>
+	<ul>
+		<li>Move Light +Z: 1</li>
+		<li>Move Light -Z: 2</li>
+		<li>Move Light -X: 3</li>
+		<li>Move Light +X: 4</li>
+		<li>Move Light Down: 5</li>
+		<li>Move Light Up: 6</li>
+	</ul>
+	<h2>Toggles</h2>
+	<ul>
 		<li>Toggle blue light<input type="checkbox" name="blueLight" value="on" checked></li>
 		<li>Toggle red light<input type="checkbox" name="redLight" value="on" checked></li>
+		<li>Move red light<input type="checkbox" name="redLightMove" value="on"></li>
+		<li>Move blue light<input type="checkbox" name="blueLightMove" value="on"></li>
 	</ul>
 
 	<div class="container">
-		<canvas id="mycanvas" width="1280" height="960"></canvas>
+		<canvas id="mycanvas" width="960" height="720"></canvas>
 	</div>
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
