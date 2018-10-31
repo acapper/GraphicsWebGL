@@ -160,6 +160,10 @@ class Model {
 		return this.trans;
 	}
 
+	getTransF() {
+		return this.trans;
+	}
+
 	createNewIndexBuffer(gl) {
 		this.indexBuffer.push(gl.createBuffer());
 		gl = null;
