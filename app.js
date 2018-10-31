@@ -39,6 +39,11 @@ var Init = function() {
 			alert('Your browser does not support WebGL');
 		}
 
+		$("[name='blueLight']").prop('checked', true);
+		$("[name='blueLightMove']").prop('checked', false);
+		$("[name='redLight']").prop('checked', true);
+		$("[name='redLightMove']").prop('checked', false);
+
 		gl.clearColor(0, 0, 0, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		gl.enable(gl.DEPTH_TEST);
@@ -86,6 +91,7 @@ var deer2;
 var model;
 
 var camera;
+var lightMove;
 
 const fpsElem = document.querySelector('#fps');
 
@@ -187,7 +193,7 @@ var Run = function(
 
 	mat4.identity(world);
 	view = tank.getCamera().getCameraMat();
-	mat4.perspective(proj, glMatrix.toRadian(90), 1280 / 960, 0.1, 10000.0);
+	mat4.perspective(proj, glMatrix.toRadian(90), 960 / 720, 0.1, 10000.0);
 
 	requestAnimationFrame(draw);
 };
@@ -266,12 +272,6 @@ var keyboard = function(delta) {
 	if (keys['Y'.charCodeAt(0)]) {
 		tank.getCamera().rotateViewPos([0, -camrot * delta, 0]);
 	}
-	if (keys['P'.charCodeAt(0)]) {
-		tank.getCamera().rotateViewPos([camrot * delta, 0, 0]);
-	}
-	if (keys[186]) {
-		tank.getCamera().rotateViewPos([-camrot * delta, 0, 0]);
-	}
 	if (keys['M'.charCodeAt(0)]) {
 		var trans = tank.getTranslation();
 		var camera = new Camera({
@@ -288,37 +288,44 @@ var keyboard = function(delta) {
 		tank.setCamera(camera);
 	}
 	tank.getCamera().transCamera(cameraTrans);
-	tank.getCamera().rotateLookAt([0, 0, 0]);
+	tank.getCamera().setLookAt(tank.getTranslation());
 	view = tank.getCamera().getCameraMat();
-	if (keys['1'.charCodeAt(0)]) {
-		var pos = lights[0].getTranslation();
-		pos[2] += 0.5 * delta;
-		lights[0].getTranslation(pos);
-	}
-	if (keys['2'.charCodeAt(0)]) {
-		var pos = lights[0].getTranslation();
-		pos[2] -= 0.5 * delta;
-		lights[0].getTranslation(pos);
-	}
-	if (keys['3'.charCodeAt(0)]) {
-		var pos = lights[0].getTranslation();
-		pos[0] += 0.5 * delta;
-		lights[0].getTranslation(pos);
-	}
-	if (keys['4'.charCodeAt(0)]) {
-		var pos = lights[0].getTranslation();
-		pos[0] -= 0.5 * delta;
-		lights[0].getTranslation(pos);
-	}
-	if (keys['5'.charCodeAt(0)]) {
-		var pos = lights[0].getTranslation();
-		pos[1] -= 0.5 * delta;
-		lights[0].getTranslation(pos);
-	}
-	if (keys['6'.charCodeAt(0)]) {
-		var pos = lights[0].getTranslation();
-		pos[1] += 0.5 * delta;
-		lights[0].getTranslation(pos);
+
+	var lightToMove;
+	lights.forEach(e => {
+		if (lightMove && e.name == lightMove) lightToMove = e;
+	});
+	if (lightToMove && lightToMove.getOn() == 1) {
+		if (keys['1'.charCodeAt(0)]) {
+			var pos = lightToMove.getTranslation();
+			pos[2] += 0.5 * delta;
+			lightToMove.getTranslation(pos);
+		}
+		if (keys['2'.charCodeAt(0)]) {
+			var pos = lightToMove.getTranslation();
+			pos[2] -= 0.5 * delta;
+			lightToMove.getTranslation(pos);
+		}
+		if (keys['3'.charCodeAt(0)]) {
+			var pos = lightToMove.getTranslation();
+			pos[0] += 0.5 * delta;
+			lightToMove.getTranslation(pos);
+		}
+		if (keys['4'.charCodeAt(0)]) {
+			var pos = lightToMove.getTranslation();
+			pos[0] -= 0.5 * delta;
+			lightToMove.getTranslation(pos);
+		}
+		if (keys['5'.charCodeAt(0)]) {
+			var pos = lightToMove.getTranslation();
+			pos[1] -= 0.5 * delta;
+			lightToMove.getTranslation(pos);
+		}
+		if (keys['6'.charCodeAt(0)]) {
+			var pos = lightToMove.getTranslation();
+			pos[1] += 0.5 * delta;
+			lightToMove.getTranslation(pos);
+		}
 	}
 };
 var c = [];
@@ -398,4 +405,22 @@ $("[name='blueLight']").change(function() {
 		});
 	}
 	lightsJSON = getLightJSON();
+});
+
+$("[name='blueLightMove']").change(function() {
+	if (this.checked) {
+		$("[name='redLightMove']").prop('checked', false);
+		lightMove = 'blue';
+	} else {
+		lightMove = null;
+	}
+});
+
+$("[name='redLightMove']").change(function() {
+	if (this.checked) {
+		$("[name='blueLightMove']").prop('checked', false);
+		lightMove = 'red';
+	} else {
+		lightMove = null;
+	}
 });
