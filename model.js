@@ -6,7 +6,8 @@ class Model {
 		shader: shader,
 		rotation: [0, 0, 0],
 		scale: [0, 0, 0],
-		translation: [0, 0, 0]
+		translation: [0, 0, 0],
+		meshIndices: null
 	};*/
 	constructor(model) {
 		this.bufferKeys = [
@@ -64,6 +65,22 @@ class Model {
 
 		this.createBuffers(gl, model.model);
 		this.bindTexture(gl);
+	}
+
+	getRotation() {
+		return this.rotation;
+	}
+
+	setRotation(rotation) {
+		this.rotation = rotation;
+	}
+
+	getTranslation() {
+		return this.translation;
+	}
+
+	setTranslation(translation) {
+		this.translation = translation;
 	}
 
 	createBuffers(gl, model) {
