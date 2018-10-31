@@ -12,76 +12,54 @@ var readTextFile = function(file, call) {
 	rawFile.send(null);
 };
 
+var gl;
 var Init = function() {
-	var image = loadImage('texture.png');
-	var image2 = loadImage('texture2.png');
-	var image3 = loadImage('texture3.png');
-	var vsText = loadTextResource('shaders/vert.vert');
-	var fsText = loadTextResource('shaders/frag.frag');
-	var lfsText = loadTextResource('shaders/light.frag');
-	var model = loadJSONResource('models/T34/T34.json');
-	var deer = loadJSONResource('models/lowpolydeer/deer.json');
-	var sphere = loadJSONResource('models/sphere/sphere.json');
-	var bullet = loadJSONResource('models/TankShell/TankShell.json');
+	var proms = loadAll([
+		'texture.png',
+		'texture2.png',
+		'texture3.png',
+		'shaders/vert.vert',
+		'shaders/frag.frag',
+		'shaders/light.frag',
+		'models/T34/T34.json',
+		'models/lowpolydeer/deer.json',
+		'models/sphere/sphere.json',
+		'models/TankShell/TankShell.json'
+	]);
 
-	Promise.all([
-		image,
-		image2,
-		image3,
-		vsText,
-		fsText,
-		lfsText,
-		model,
-		deer,
-		sphere,
-		bullet
-	]).then(
-		([
-			imageR,
-			image2R,
-			image3R,
-			vsTextR,
-			fsTextR,
-			lfsTextR,
-			modelR,
-			deerR,
-			sphereR,
-			bulletR
-		]) => {
-			var canvas = document.getElementById('mycanvas');
-			var gl = canvas.getContext('webgl');
+	Promise.all(proms).then(promsR => {
+		var canvas = document.getElementById('mycanvas');
+		gl = canvas.getContext('webgl');
 
-			if (!gl) {
-				gl = canvas.getContext('experimental-webgl');
-			}
-
-			if (!gl) {
-				alert('Your browser does not support WebGL');
-			}
-
-			gl.clearColor(0, 0, 0, 1);
-			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-			gl.enable(gl.DEPTH_TEST);
-			gl.enable(gl.CULL_FACE);
-			gl.frontFace(gl.CCW);
-			gl.cullFace(gl.BACK);
-
-			var shader = new Shader(gl, vsTextR, fsTextR);
-			var lightshader = new Shader(gl, vsTextR, lfsTextR);
-			Run(
-				gl,
-				imageR,
-				image2R,
-				image3R,
-				shader,
-				lightshader,
-				modelR,
-				deerR,
-				sphereR,
-				bulletR
-			);
+		if (!gl) {
+			gl = canvas.getContext('experimental-webgl');
 		}
-	);
+
+		if (!gl) {
+			alert('Your browser does not support WebGL');
+		}
+
+		gl.clearColor(0, 0, 0, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		gl.enable(gl.DEPTH_TEST);
+		gl.enable(gl.CULL_FACE);
+		gl.frontFace(gl.CCW);
+		gl.cullFace(gl.BACK);
+
+		var shader = new Shader(gl, promsR[3], promsR[4]);
+		var lightshader = new Shader(gl, promsR[3], promsR[5]);
+		Run(
+			promsR[0],
+			promsR[1],
+			promsR[2],
+			shader,
+			lightshader,
+			promsR[6],
+			promsR[7],
+			promsR[8],
+			promsR[9]
+		);
+	});
 };
 
 var identityMat = new Float32Array(16);
@@ -91,8 +69,9 @@ var world = new Float32Array(16);
 var view = new Float32Array(16);
 var proj = new Float32Array(16);
 var temp = new Float32Array(16);
-var viewPos = [-8, 3, 0];
-var viewLook = [-3, 0, 0];
+
+var viewPos = [0, 3, -5];
+var viewLook = [0, 3, 0];
 var viewUp = [0, 1, 0];
 
 var worldTrans = [0, 0, 0];
@@ -102,16 +81,16 @@ var redLight;
 var blueLight;
 var lightsJSON;
 
+var light;
 var tank;
 var deer;
+var model;
 
 var camera;
-var gl;
 
 const fpsElem = document.querySelector('#fps');
 
 var Run = function(
-	glContext,
 	texture,
 	texture2,
 	texture3,
@@ -122,135 +101,46 @@ var Run = function(
 	spherejson,
 	bulletjson
 ) {
-	gl = glContext;
-	glContext = null;
-
-	var s = [0.1, 0.1, 0.1];
-	var r = [0, 90, 0];
-	var t = [-3, 2, 0];
-
-	redLight = new Light(
-		{
-			name: 'red',
-			colour: [1, 0, 0],
-			direction: [1, 0, 0],
-			on: 1
-		},
-		{
-			gl,
-			modeljson: spherejson,
-			texture,
-			shader: lightshader,
-			s,
-			r,
-			t,
-			meshIndices: null
-		}
-	);
-
-	var s = [0.1, 0.1, 0.1];
-	var r = [0, 90, 0];
-	var t = [3, 2, 0];
-
-	blueLight = new Light(
-		{
-			name: 'blue',
-			colour: [0, 0, 1],
-			direction: [1, 0, 0],
-			on: 1
-		},
-		{
-			gl,
-			modeljson: spherejson,
-			texture,
-			shader: lightshader,
-			s,
-			r,
-			t,
-			meshIndices: null
-		}
-	);
-	spherejson = null;
-
-	lights.push(blueLight);
-	$("[name='blueLight']").prop('checked', true);
-	lights.push(redLight);
-	$("[name='redLight']").prop('checked', true);
-
-	var s = [0.006, 0.006, 0.006];
-	var r = [0, 90, 0];
-	var t = [0, 0, -3];
-
-	var tankTop = [0, 2, 3, 7, 9, 10, 13];
-	var tankBot = [1, 4, 5, 6, 8, 11, 12, 14];
-
-	var bs = [0.05, 0.05, 0.05];
-	var br = [0, 0, -90];
-	var bt = [0, 0, 0];
-
-	tank = new Tank(
-		{
-			gl,
-			modeljson: modeljson,
-			texture: texture2,
-			shader,
-			s,
-			r,
-			t,
-			meshIndices: tankTop
-		},
-		{
-			gl,
-			modeljson: modeljson,
-			texture: texture2,
-			shader,
-			s,
-			r,
-			t,
-			meshIndices: tankBot
-		},
-		[
-			{ name: 'bomb', colour: [1, 0.6, 0], direction: [1, 0, 0], on: 0 },
-			{
-				gl,
-				modeljson: bulletjson,
-				texture: texture3,
-				shader: shader,
-				s: bs,
-				r: br,
-				t: bt,
-				meshIndices: null
-			}
-		]
-	);
-	modeljson = null;
-	bulletjson = null;
-
-	lights.push(tank.getBomb());
-
-	var s = [0.0015, 0.0015, 0.0015];
-	var r = [90, 180, 270];
-	var t = [0, -2, 0];
-	deer = new Model({
-		gl,
-		modeljson: deerjson,
-		texture: texture,
-		shader,
-		s,
-		r,
-		t,
-		meshIndices: null
-	});
-	deerjson = null;
-
-	shader = null;
-	lightshader = null;
-
 	camera = new Camera({
 		viewPos: viewPos,
 		viewLook: viewLook,
 		viewUp: viewUp
 	});
+
+	deer = new Model({
+		gl,
+		texture: texture,
+		model: deerjson,
+		shader: shader,
+		rotation: [-90, 0, 0],
+		scale: [0.003, 0.003, 0.003],
+		translation: [5, 0, 0]
+	});
+
+	model = new Model({
+		gl,
+		texture: texture,
+		model: modeljson,
+		shader: shader,
+		rotation: [0, 180, 0],
+		scale: [0.006, 0.006, 0.006],
+		translation: [0, 0, 0]
+	});
+
+	light = new Light(
+		{
+			gl,
+			texture: texture,
+			model: spherejson,
+			shader: lightshader,
+			rotation: [0, 0, 0],
+			scale: [0.25, 0.25, 0.25],
+			translation: [2, 1, 0]
+		},
+		{ name: 'red', colour: [1, 0, 0], direction: [0, 0, 0], on: 1 }
+	);
+
+	lights.push(light);
 
 	mat4.identity(world);
 	view = camera.getCameraMat();
@@ -273,37 +163,41 @@ var draw = function(now) {
 	now = null;
 };
 
+var rotMat = mat4.create();
+var scaleMat = mat4.create();
+var transMat = mat4.create();
 var render = function(delta) {
 	gl.clearColor(0.1, 0.1, 0.1, 1);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	world = identityMat;
-
-	tank.draw(gl, world, view, proj, lightsJSON);
-	deer.draw(gl, world, view, proj, lightsJSON);
+	world = mat4FromRotTransScale(world, [0, 0, 0], [0, 0, 0], [1, 1, 1]);
 
 	lights.forEach(e => {
-		if (e.getOn() && e.name != 'bomb') {
-			e.draw(gl, world, view, proj, lightsJSON);
-		}
+		e.draw(gl, world, view, proj, lightsJSON);
 	});
+	model.draw(gl, world, view, proj, lightsJSON);
+	deer.draw(gl, world, view, proj, lightsJSON);
 	delta = null;
 };
 
 var update = function(delta) {
 	lightsJSON = getLightJSON();
 	keyboard(delta);
-	tank.update(delta);
-	deer.update(delta);
+	lights.forEach(e => {
+		e.update();
+	});
+	model.update();
+	deer.update();
 	delta = null;
 };
 
-var camrot = 0.5;
+var camrot = 0;
 
 var keyboard = function(delta) {
+	camrot = 30;
 	var cameraTrans = [0, 0, 0];
-	if (keys['W'.charCodeAt(0)] || keys['S'.charCodeAt(0)]) {
-		camera.move(tank.getPosition());
+	if (keys['U'.charCodeAt(0)]) {
+		cameraTrans[2] += 0.5 * delta;
 	}
 	if (keys['J'.charCodeAt(0)]) {
 		cameraTrans[2] -= 0.5 * delta;
@@ -328,7 +222,7 @@ var keyboard = function(delta) {
 		});
 	}
 	camera.transCamera(cameraTrans);
-	//camera.rotateViewPos([0, camrot * delta, 0]);
+	camera.rotateViewPos([0, camrot * delta, 0]);
 	camera.rotateLookAt([0, 0, 0]);
 	view = camera.getCameraMat();
 	if (keys['T'.charCodeAt(0)]) {
@@ -361,7 +255,6 @@ var keyboard = function(delta) {
 		pos[1] += 0.5 * delta;
 		lights[0].setLightPos(pos);
 	}
-	tank.keyboardInput(delta, keys);
 };
 var c = [];
 var d = [];
@@ -375,9 +268,9 @@ var getLightJSON = function() {
 	on = [];
 
 	lights.forEach(e => {
-		c = c.concat(e.getLightCol());
-		d = d.concat(e.getLightDir());
-		p = p.concat(e.getLightPos());
+		c = c.concat(e.getColour());
+		d = d.concat(e.getDirection());
+		p = p.concat(e.getPosition());
 		on = on.concat(e.getOn());
 	});
 
