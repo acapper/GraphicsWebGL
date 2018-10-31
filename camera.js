@@ -1,7 +1,9 @@
 class Camera {
 	constructor(camera) {
 		this.viewPos = camera.viewPos;
+		this.startPos = camera.viewPos;
 		this.viewLook = camera.viewLook;
+		this.startLook = camera.viewLook;
 		this.viewUp = camera.viewUp;
 		this.proj = new Float32Array(16);
 		this.identityMat = new Float32Array(16);
@@ -10,6 +12,20 @@ class Camera {
 		this.rym = mat4.create();
 		this.rzm = mat4.create();
 		this.rotMat = mat4.create();
+	}
+
+	move(pos) {
+		this.viewLook = [
+			pos[0] + this.startLook[0],
+			pos[1] + this.startLook[1],
+			pos[2] + this.startLook[2]
+		];
+		this.viewPos = [
+			pos[0] + this.startPos[0],
+			pos[1] + this.startPos[1],
+			pos[2] + this.startPos[2]
+		];
+		pos = null;
 	}
 
 	getCameraMat() {
@@ -38,7 +54,12 @@ class Camera {
 			this.viewPos[2] - this.viewLook[2],
 			1
 		];
-		this.rotMat = this.rotateMat(this.rotMat, rot[0], rot[1], rot[2]);
+		this.rotMat = this.rotateMat(
+			this.rotMat,
+			glMatrix.toRadian(rot[0]),
+			glMatrix.toRadian(rot[1]),
+			glMatrix.toRadian(rot[2])
+		);
 		vec4.transformMat4(viewPosH, viewPosH, this.rotMat);
 		this.viewPos = [
 			viewPosH[0] + this.viewLook[0],
@@ -50,20 +71,25 @@ class Camera {
 	}
 
 	rotateLookAt(rot) {
-		var viewPosH = [
-			viewPos[0] - viewLook[0],
-			viewPos[1] - viewLook[1],
-			viewPos[2] - viewLook[2],
+		var viewLookH = [
+			this.viewLook[0] - this.viewPos[0],
+			this.viewLook[1] - this.viewPos[1],
+			this.viewLook[2] - this.viewPos[2],
 			1
 		];
-		this.rotMat = this.rotateMat(this.rotMat, rot[0], rot[1], rot[2]);
-		vec4.transformMat4(viewPosH, viewPosH, this.rotMat);
-		this.viewPos = [
-			viewPosH[0] + viewLook[0],
-			viewPosH[1] + viewLook[1],
-			viewPosH[2] + viewLook[2]
+		this.rotMat = this.rotateMat(
+			this.rotMat,
+			glMatrix.toRadian(rot[0]),
+			glMatrix.toRadian(rot[1]),
+			glMatrix.toRadian(rot[2])
+		);
+		vec4.transformMat4(viewLookH, viewLookH, this.rotMat);
+		this.viewLook = [
+			viewLookH[0] + this.viewPos[0],
+			viewLookH[1] + this.viewPos[1],
+			viewLookH[2] + this.viewPos[2]
 		];
-		viewPosH = null;
+		viewLookH = null;
 		rot = null;
 	}
 
