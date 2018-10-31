@@ -21,7 +21,7 @@ var Init = function() {
 	var model = loadJSONResource('models/T34/T34.json');
 	var deer = loadJSONResource('models/lowpolydeer/deer.json');
 	var sphere = loadJSONResource('models/sphere/sphere.json');
-	var bullet = loadJSONResource('models/Tank Shell/Tank Shell.json');
+	var bullet = loadJSONResource('models/Tank Shell/Tank shell.json');
 
 	Promise.all([
 		image,
