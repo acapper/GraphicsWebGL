@@ -10,6 +10,7 @@ var loadTextResource = function(url) {
 						' on resource ' +
 						url;
 				} else {
+					url = null;
 					resolve(request.responseText);
 				}
 			}
@@ -22,6 +23,7 @@ var loadImage = function(url) {
 	return new Promise(function(resolve) {
 		var image = new Image();
 		image.onload = function() {
+			url = null;
 			resolve(image);
 		};
 		image.src = url;
@@ -33,6 +35,7 @@ var loadJSONResource = function(url) {
 		var json = loadTextResource(url);
 		return Promise.all([json]).then(([jsonR]) => {
 			try {
+				url = null;
 				resolve(JSON.parse(jsonR));
 			} catch (e) {
 				console.log(e);

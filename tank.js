@@ -23,6 +23,9 @@ class Tank {
 		this.bombTrans = this.bomb.getModel().getTrans();
 		this.bombSpeed = 10;
 		//this.bombSpeed = 0;
+		top = null;
+		bot = null;
+		bomb = null;
 	}
 
 	getBomb() {
@@ -33,6 +36,8 @@ class Tank {
 		this.move(delta, keys);
 		this.rotate(delta, keys);
 		this.fire(keys);
+		keys = null;
+		delta = null;
 	}
 
 	rotate(delta, keys) {
@@ -48,23 +53,33 @@ class Tank {
 		if (keys['A'.charCodeAt(0)]) {
 			this.rotateTopAndBot(delta, this.v * 0.5, [0, 1, 0]);
 		}
+		keys = null;
+		delta = null;
 	}
 
 	rotateTop(delta, v, axis) {
 		this.rottop = this.modeltop.getRotation();
 		this.rottop = this.calcRotation(axis, v, delta, this.rottop);
 		this.modeltop.setRotation(this.rottop);
+		axis = null;
+		delta = null;
+		v = null;
 	}
 
 	rotateBot(delta, v, axis) {
 		this.rotbot = this.modelbot.getRotation();
 		this.rotbot = this.calcRotation(axis, v, delta, this.rotbot);
 		this.modelbot.setRotation(this.rotbot);
+		axis = null;
+		delta = null;
+		v = null;
 	}
 
 	rotateTopAndBot(delta, v, axis) {
 		this.rotateTop(delta, v, axis);
 		this.rotateBot(delta, v, axis);
+		axis = null;
+		delta = null;
 	}
 
 	calcRotation(axis, v, delta, rot) {
@@ -73,6 +88,9 @@ class Tank {
 				rot[index] += v * delta;
 			}
 		});
+		axis = null;
+		v = null;
+		delta = null;
 		return rot;
 	}
 
@@ -83,9 +101,12 @@ class Tank {
 		if (keys['S'.charCodeAt(0)]) {
 			this.moveForward(delta * -this.d);
 		}
+		delta = null;
+		keys = null;
 	}
 
 	moveForward(d) {
+		//IMPROVE use homogeneous coordinates and make rotation mat
 		this.rot = this.modelbot.getRotation();
 		this.rotf = this.modelbot.getRotationF();
 		this.forward = [
@@ -102,11 +123,13 @@ class Tank {
 		this.modelbot.setTrans(this.transbot);
 		vec3.add(this.transtop, this.transtop, this.temp);
 		this.modelbot.setTrans(this.transtop);
+		d = null;
 	}
 
 	fire(keys) {
 		if (!this.bombVisible) {
 			if (keys['V'.charCodeAt(0)] && !this.bombVisible) {
+				//IMPROVE use homogeneous coordinates and make rotation mat
 				this.transtop = this.modeltop.getTrans();
 				this.rot = this.modeltop.getRotation();
 				this.rotf = this.modeltop.getRotationF();
@@ -136,6 +159,7 @@ class Tank {
 				}, 1500);
 			}
 		}
+		keys = null;
 	}
 
 	hideBomb() {
@@ -143,12 +167,17 @@ class Tank {
 		this.bombMoving = false;
 	}
 
-	draw(gl, world, view, proj, light) {
-		this.modeltop.draw(gl, world, view, proj, light);
-		this.modelbot.draw(gl, world, view, proj, light);
+	draw(gl, world, view, proj, lights) {
+		this.modeltop.draw(gl, world, view, proj, lights);
+		this.modelbot.draw(gl, world, view, proj, lights);
 		if (this.bombVisible) {
-			this.bomb.draw(gl, world, view, proj, light);
+			this.bomb.draw(gl, world, view, proj, lights);
 		}
+		gl = null;
+		world = null;
+		view = null;
+		proj = null;
+		lights = null;
 	}
 
 	update(delta) {
@@ -167,5 +196,6 @@ class Tank {
 						delta * this.bombSpeed * this.bombDirection[2]
 				]);
 		}
+		delta = null;
 	}
 }

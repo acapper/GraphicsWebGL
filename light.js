@@ -21,6 +21,8 @@ class Light {
 		var program = this.model.getShader().getProgram();
 		gl.useProgram(program);
 		this.colourL = gl.getUniformLocation(program, 'lightcolour');
+		program = null;
+		gl = null;
 	}
 
 	getName() {
@@ -33,10 +35,12 @@ class Light {
 
 	setOn(on) {
 		this.on = on;
+		on = null;
 	}
 
 	setLightCol(col) {
 		this.lightCol = col;
+		col = null;
 	}
 
 	getLightCol() {
@@ -45,6 +49,7 @@ class Light {
 
 	setLightDir(dir) {
 		this.lightDir = dir;
+		dir = null;
 	}
 
 	getLightDir() {
@@ -53,6 +58,7 @@ class Light {
 
 	setLightPos(pos) {
 		this.model.setTrans(pos);
+		pos = null;
 	}
 
 	getLightPos() {
@@ -63,13 +69,18 @@ class Light {
 		return this.model;
 	}
 
-	draw(gl, world, view, proj, light) {
+	draw(gl, world, view, proj, lights) {
 		gl.useProgram(
 			this.getModel()
 				.getShader()
 				.getProgram()
 		);
 		gl.uniform3fv(this.colourL, this.lightCol);
-		this.model.draw(gl, world, view, proj, light);
+		this.model.draw(gl, world, view, proj, lights);
+		gl = null;
+		world = null;
+		view = null;
+		proj = null;
+		lights = null;
 	}
 }

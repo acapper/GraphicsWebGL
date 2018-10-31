@@ -1,7 +1,6 @@
 class Model {
 	constructor(json) {
 		var gl = json.gl;
-		this.modeljson = json.modeljson;
 		this.texture = json.texture;
 		this.modelTexture = null;
 		this.meshIndices = json.meshIndices;
@@ -81,17 +80,19 @@ class Model {
 		this.attenkqL = gl.getUniformLocation(program, 'attenuation_kq');
 
 		this.staticTransform();
-		this.createBuffers(gl);
+		this.createBuffers(gl, json.modeljson);
 		this.bindTexture(gl);
+		program = null;
+		gl = null;
 	}
 
 	getShader() {
 		return this.shader;
 	}
 
-	createBuffers(gl) {
+	createBuffers(gl, modeljson) {
 		var i = 0;
-		this.modeljson.meshes.forEach(e => {
+		modeljson.meshes.forEach(e => {
 			if (this.meshIndices == null || this.meshIndices.indexOf(i) > -1) {
 				var modelIndicies = [].concat.apply([], e.faces);
 				var modelVerts = e.vertices;
@@ -131,6 +132,8 @@ class Model {
 			}
 			i++;
 		});
+		gl = null;
+		modeljson = null;
 	}
 
 	setRotation(rot) {
@@ -159,15 +162,21 @@ class Model {
 
 	createNewIndexBuffer(gl) {
 		this.indexBuffer.push(gl.createBuffer());
+		gl = null;
 	}
 
 	createNewBuffer(gl) {
 		this.buffers.push(gl.createBuffer());
+		gl = null;
 	}
 
 	bindBufferData(gl, bufferL, data, type) {
 		gl.bindBuffer(type, bufferL);
 		gl.bufferData(type, data, gl.STATIC_DRAW);
+		gl = null;
+		bufferL = null;
+		data = null;
+		type = null;
 	}
 
 	getLastBuffer() {
@@ -180,6 +189,8 @@ class Model {
 
 	bindIndexBuffers(gl, i) {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer[i]);
+		gl = null;
+		i = null;
 	}
 
 	bindArrayBuffers(gl, i) {
@@ -205,6 +216,8 @@ class Model {
 			}
 			j++;
 		});
+		gl = null;
+		i = null;
 	}
 
 	bindArrayBuffer(gl, vbo, attribL, numOfEls, size, offset) {
@@ -218,6 +231,12 @@ class Model {
 			offset * Float32Array.BYTES_PER_ELEMENT // Offset from the beginning of a single vertex to this attribute
 		);
 		gl.enableVertexAttribArray(attribL);
+		gl = null;
+		vbo = null;
+		attribL = null;
+		numOfEls = null;
+		size = null;
+		offset = null;
 	}
 
 	bindTexture(gl) {
@@ -237,6 +256,7 @@ class Model {
 			this.texture
 		);
 		gl.activeTexture(gl.TEXTURE0);
+		gl = null;
 	}
 
 	bindUniforms(gl, world, view, proj, lights) {
@@ -262,6 +282,11 @@ class Model {
 		gl.uniform1f(this.attenkcL, 1.0);
 		gl.uniform1f(this.attenklL, 0.05);
 		gl.uniform1f(this.attenkqL, 0.05);
+		gl = null;
+		world = null;
+		view = null;
+		proj = null;
+		lights = null;
 	}
 
 	draw(gl, world, view, proj, lights) {
@@ -290,13 +315,19 @@ class Model {
 				0
 			);
 		}
+		gl = null;
+		world = null;
+		view = null;
+		proj = null;
+		lights = null;
 	}
 
 	update(delta) {
-		this.transform(delta);
+		this.transform();
+		delta = null;
 	}
 
-	transform(delta) {
+	transform() {
 		mat4.mul(this.model, this.identityMat, this.identityMat);
 
 		this.staticTransform();
@@ -348,9 +379,6 @@ class Model {
 	}
 
 	rotateMat(mat, rxa, rya, rza) {
-		mat4.mul(this.rxm, this.identityMat, this.identityMat);
-		mat4.mul(this.rym, this.identityMat, this.identityMat);
-		mat4.mul(this.rzm, this.identityMat, this.identityMat);
 		mat4.fromRotation(this.rxm, rxa, [1, 0, 0]);
 		mat4.fromRotation(this.rym, rya, [0, 1, 0]);
 		mat4.fromRotation(this.rzm, rza, [0, 0, 1]);
@@ -359,17 +387,5 @@ class Model {
 		mat4.mul(mat, mat, this.rym);
 		mat4.mul(mat, mat, this.rzm);
 		return mat;
-	}
-
-	rotateX(angle, mat) {
-		return mat4.rotate(mat, this.identityMat, angle, [1, 0, 0]);
-	}
-
-	rotateY(angle, mat) {
-		return mat4.rotate(mat, this.identityMat, angle, [0, 1, 0]);
-	}
-
-	rotateZ(angle, mat) {
-		return mat4.rotate(mat, this.identityMat, angle, [0, 0, 1]);
 	}
 }
