@@ -15,7 +15,7 @@ var readTextFile = function(file, call) {
 var gl;
 var Init = function() {
 	var proms = loadAll([
-		'texture.png',
+		'texture4.png',
 		'texture2.png',
 		'texture3.png',
 		'shaders/vert.vert',
@@ -71,8 +71,6 @@ var proj = new Float32Array(16);
 var temp = new Float32Array(16);
 
 var viewPos = [0, 3, -5];
-var viewLook = [0, 3, 0];
-var viewUp = [0, 1, 0];
 
 var worldTrans = [0, 0, 0];
 
@@ -83,7 +81,8 @@ var lightsJSON;
 
 var light;
 var tank;
-var deer;
+var deer1;
+var deer2;
 var model;
 
 var camera;
@@ -101,30 +100,58 @@ var Run = function(
 	spherejson,
 	bulletjson
 ) {
-	camera = new Camera({
-		viewPos: viewPos,
-		viewLook: viewLook,
-		viewUp: viewUp
-	});
-
-	deer = new Model({
+	deer1 = new Model({
 		gl,
 		texture: texture,
 		model: deerjson,
 		shader: shader,
 		rotation: [-90, 0, 0],
-		scale: [0.003, 0.003, 0.003],
+		scale: [0.002, 0.002, 0.002],
 		translation: [5, 0, 0]
 	});
-
-	model = new Model({
+	deer2 = new Model({
 		gl,
 		texture: texture,
+		model: deerjson,
+		shader: shader,
+		rotation: [-90, 0, 0],
+		scale: [0.002, 0.002, 0.002],
+		translation: [-5, 0, 0]
+	});
+
+	tank = new Tank({
+		gl,
+		texture: texture2,
 		model: modeljson,
 		shader: shader,
-		rotation: [0, 180, 0],
-		scale: [0.006, 0.006, 0.006],
-		translation: [0, 0, 0]
+		top: {
+			rotation: [0, 0, 0],
+			scale: [0.006, 0.006, 0.006],
+			translation: [0, 0, -3],
+			indices: [0, 2, 3, 7, 9, 10, 13]
+		},
+		bot: {
+			rotation: [0, 0, 0],
+			scale: [0.006, 0.006, 0.006],
+			translation: [0, 0, -3],
+			indices: [1, 4, 5, 6, 8, 11, 12, 14]
+		},
+		bomb: {
+			texture: texture3,
+			model: bulletjson,
+			rotation: [0, -90, -90],
+			scale: [0.05, 0.05, 0.05],
+			translation: [0, 1.36, 0.2],
+			light: {
+				name: 'bomb',
+				colour: [1, 0, 0],
+				direction: [0, 0, 0],
+				on: 0
+			}
+		},
+		camera: {
+			position: viewPos
+		}
 	});
 
 	light = new Light(
@@ -135,15 +162,31 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [0.25, 0.25, 0.25],
-			translation: [2, 1, 0]
+			translation: [2, 3, 0]
 		},
 		{ name: 'red', colour: [1, 0, 0], direction: [0, 0, 0], on: 1 }
 	);
 
 	lights.push(light);
 
+	light = new Light(
+		{
+			gl,
+			texture: texture,
+			model: spherejson,
+			shader: lightshader,
+			rotation: [0, 0, 0],
+			scale: [0.25, 0.25, 0.25],
+			translation: [-2, 3, 0]
+		},
+		{ name: 'blue', colour: [0, 0, 1], direction: [0, 0, 0], on: 1 }
+	);
+	lights.push(light);
+
+	lights.push(tank.getBomb());
+
 	mat4.identity(world);
-	view = camera.getCameraMat();
+	view = tank.getCamera().getCameraMat();
 	mat4.perspective(proj, glMatrix.toRadian(90), 1280 / 960, 0.1, 10000.0);
 
 	requestAnimationFrame(draw);
@@ -173,10 +216,12 @@ var render = function(delta) {
 	world = mat4FromRotTransScale(world, [0, 0, 0], [0, 0, 0], [1, 1, 1]);
 
 	lights.forEach(e => {
-		e.draw(gl, world, view, proj, lightsJSON);
+		if (e.name != 'bomb' && e.on != 0)
+			e.draw(gl, world, view, proj, lightsJSON);
 	});
-	model.draw(gl, world, view, proj, lightsJSON);
-	deer.draw(gl, world, view, proj, lightsJSON);
+	tank.draw(gl, world, view, proj, lightsJSON);
+	deer1.draw(gl, world, view, proj, lightsJSON);
+	deer2.draw(gl, world, view, proj, lightsJSON);
 	delta = null;
 };
 
@@ -186,8 +231,9 @@ var update = function(delta) {
 	lights.forEach(e => {
 		e.update();
 	});
-	model.update();
-	deer.update();
+	tank.update(delta, keys);
+	deer1.update();
+	deer2.update();
 	delta = null;
 };
 
@@ -214,46 +260,65 @@ var keyboard = function(delta) {
 	if (keys['L'.charCodeAt(0)]) {
 		cameraTrans[1] -= 0.5 * delta;
 	}
-	if (keys['M'.charCodeAt(0)]) {
-		camera = new Camera({
-			viewPos: viewPos,
-			viewLook: viewLook,
-			viewUp: viewUp
-		});
-	}
-	camera.transCamera(cameraTrans);
-	camera.rotateViewPos([0, camrot * delta, 0]);
-	camera.rotateLookAt([0, 0, 0]);
-	view = camera.getCameraMat();
-	if (keys['T'.charCodeAt(0)]) {
-		var pos = lights[0].getLightPos();
-		pos[2] += 0.5 * delta;
-		lights[0].setLightPos(pos);
-	}
-	if (keys['G'.charCodeAt(0)]) {
-		var pos = lights[0].getLightPos();
-		pos[2] -= 0.5 * delta;
-		lights[0].setLightPos(pos);
-	}
-	if (keys['R'.charCodeAt(0)]) {
-		var pos = lights[0].getLightPos();
-		pos[0] += 0.5 * delta;
-		lights[0].setLightPos(pos);
+	if (keys['I'.charCodeAt(0)]) {
+		tank.getCamera().rotateViewPos([0, camrot * delta, 0]);
 	}
 	if (keys['Y'.charCodeAt(0)]) {
-		var pos = lights[0].getLightPos();
+		tank.getCamera().rotateViewPos([0, -camrot * delta, 0]);
+	}
+	if (keys['P'.charCodeAt(0)]) {
+		tank.getCamera().rotateViewPos([camrot * delta, 0, 0]);
+	}
+	if (keys[186]) {
+		tank.getCamera().rotateViewPos([-camrot * delta, 0, 0]);
+	}
+	if (keys['M'.charCodeAt(0)]) {
+		var trans = tank.getTranslation();
+		var camera = new Camera({
+			viewPos: [
+				trans[0] + viewPos[0],
+				trans[1] + viewPos[1],
+				trans[2] + viewPos[2]
+			],
+			viewLook: tank.getTranslation(),
+			viewUp: [0, 1, 0]
+		});
+		camera.rotateViewPos([0, 0, 0]);
+		camera.rotateViewPos(tank.getRotation());
+		tank.setCamera(camera);
+	}
+	tank.getCamera().transCamera(cameraTrans);
+	tank.getCamera().rotateLookAt([0, 0, 0]);
+	view = tank.getCamera().getCameraMat();
+	if (keys['1'.charCodeAt(0)]) {
+		var pos = lights[0].getTranslation();
+		pos[2] += 0.5 * delta;
+		lights[0].getTranslation(pos);
+	}
+	if (keys['2'.charCodeAt(0)]) {
+		var pos = lights[0].getTranslation();
+		pos[2] -= 0.5 * delta;
+		lights[0].getTranslation(pos);
+	}
+	if (keys['3'.charCodeAt(0)]) {
+		var pos = lights[0].getTranslation();
+		pos[0] += 0.5 * delta;
+		lights[0].getTranslation(pos);
+	}
+	if (keys['4'.charCodeAt(0)]) {
+		var pos = lights[0].getTranslation();
 		pos[0] -= 0.5 * delta;
-		lights[0].setLightPos(pos);
+		lights[0].getTranslation(pos);
 	}
 	if (keys['5'.charCodeAt(0)]) {
-		var pos = lights[0].getLightPos();
+		var pos = lights[0].getTranslation();
 		pos[1] -= 0.5 * delta;
-		lights[0].setLightPos(pos);
+		lights[0].getTranslation(pos);
 	}
 	if (keys['6'.charCodeAt(0)]) {
-		var pos = lights[0].getLightPos();
+		var pos = lights[0].getTranslation();
 		pos[1] += 0.5 * delta;
-		lights[0].setLightPos(pos);
+		lights[0].getTranslation(pos);
 	}
 };
 var c = [];
