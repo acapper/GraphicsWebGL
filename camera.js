@@ -28,6 +28,10 @@ class Camera {
 		pos = null;
 	}
 
+	setLookAt(look) {
+		this.viewLook = look;
+	}
+
 	getCameraMat() {
 		mat4.lookAt(this.proj, this.viewPos, this.viewLook, this.viewUp);
 		return this.proj;
