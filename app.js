@@ -251,8 +251,8 @@ var render = function() {
 	// Draw each light except the tank bomb
 	// TODO improve so that each light has property draw/notdraw
 	lights.forEach(e => {
-		//if (e.name != 'bomb' && e.on != 0)
-		e.draw(gl, world, view, proj, lightsJSON);
+		if (e.name != 'bomb' && e.on != 0)
+			e.draw(gl, world, view, proj, lightsJSON);
 	});
 
 	// Draw models
