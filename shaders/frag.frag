@@ -43,7 +43,7 @@ void main()
 			vec3 R = reflect(-L, N);							// Calculate the reflected beam, N defines the plane (see diagram on labsheet)
 			vec4 specular = pow(max(dot(R, V), 0.0), shininess) * specular_colour;	// Calculate specular component
 
-			float distanceToLight = length(lightPos[i] - fPosition.xyz);
+			float distanceToLight = length(lightPosH.xyz - fPosition.xyz);
 
 			float attenuation = 1.0 / (attenuation_kc + attenuation_kl * distanceToLight + attenuation_kq * pow(distanceToLight, 2.0));
 			//float attenuation = 1.0 / pow(distanceToLight, 2.0);
