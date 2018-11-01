@@ -16,7 +16,6 @@ var deer1;
 var deer2;
 var plane;
 
-var camera;
 var lightMove;
 
 var keys = [];
@@ -212,7 +211,7 @@ var Run = function(
 
 	// Create world, view and project matrix
 	mat4.identity(world);
-	view = tank.getCamera().getCameraMat();
+	view = tank.getCamera();
 	mat4.perspective(
 		proj,
 		glMatrix.toRadian(90),
@@ -286,7 +285,7 @@ var update = function(delta) {
 	plane.update();
 
 	// Update camera matrix
-	view = tank.getCamera().getCameraMat();
+	view = tank.getCamera();
 };
 
 // Converts lights into format needed for opengl uniform arrays
