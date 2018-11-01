@@ -1,5 +1,6 @@
 const canvas = document.getElementById('mycanvas');
 const fpsElem = document.querySelector('#fps');
+const tankSpeed = document.querySelector('#tankSpeed');
 
 var world = new Float32Array(16);
 var view = new Float32Array(16);
@@ -63,6 +64,8 @@ var Init = function() {
 			$("[name='redLightMove']").prop('checked', false);
 			$("[name='sunLight']").prop('checked', true);
 			$("[name='sunLightMove']").prop('checked', false);
+			$('#tankSpeedSlider')[0].value = 0.4;
+			tankSpeed.textContent = $('#tankSpeedSlider')[0].value;
 
 			// Set gl statemachine values
 			gl.clearColor(0, 0, 0, 1);
@@ -448,15 +451,7 @@ $("[name='sunLightMove']").change(function() {
 	}
 });
 
-$("[name='sunLightMove']").change(function() {
-	if (this.checked) {
-		// If checked make sure other light movement checkbox is unticked
-		$("[name='blueLightMove']").prop('checked', false);
-		$("[name='redLightMove']").prop('checked', false);
-		// Set light to move to light name
-		lightMove = 'sun';
-	} else {
-		// Else if it is unticked set light to move to null
-		lightMove = null;
-	}
+$('#tankSpeedSlider').change(function() {
+	tankSpeed.textContent = $('#tankSpeedSlider')[0].value;
+	tank.setTankSpeed($('#tankSpeedSlider')[0].value);
 });

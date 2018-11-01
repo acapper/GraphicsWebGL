@@ -61,9 +61,13 @@ class Tank {
 		this.bombVisible = false;
 		this.bombDirection = [0, 0, 0];
 		this.fired = false;
-		this.bombSpeed = 30;
+		this.bombSpeed = 5;
 		this.bombPos = this.bomb.getTranslation();
 		this.bombRot = this.bomb.getRotation();
+	}
+
+	setTankSpeed(s) {
+		this.tankSpeed = s;
 	}
 
 	getCamera() {
@@ -229,7 +233,7 @@ class Tank {
 			vec3.normalize(forward, forward);
 			vec3.mul(
 				forward,
-				[this.tankSpeed, this.tankSpeed, this.tankSpeed],
+				[this.bombSpeed, this.bombSpeed, this.bombSpeed],
 				forward
 			);
 			this.bombDirection = forward;

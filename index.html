@@ -27,6 +27,11 @@
 		<li>Move tank forwards: W</li>
 		<li>Move tank backwards: S</li>
 		<li>Fire Tank: V</li>
+		<li>Tank Speed: <span id="tankSpeed"></span>
+			<div>
+				<input type="range" min="0.4" max="2" value="0.4" step="0.05" class="slider" id="tankSpeedSlider">
+			</div>
+		</li>
 	</ul>
 	<h2>Camera Position</h2>
 	<ul>
@@ -51,8 +56,10 @@
 	</ul>
 	<h2>Toggles</h2>
 	<ul>
+		<li>Toggle sun light<input type="checkbox" name="sunLight" value="on" checked></li>
 		<li>Toggle blue light<input type="checkbox" name="blueLight" value="on" checked></li>
 		<li>Toggle red light<input type="checkbox" name="redLight" value="on" checked></li>
+		<li>Move sun light<input type="checkbox" name="sunLightMove" value="on"></li>
 		<li>Move red light<input type="checkbox" name="redLightMove" value="on"></li>
 		<li>Move blue light<input type="checkbox" name="blueLightMove" value="on"></li>
 	</ul>
