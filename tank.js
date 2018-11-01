@@ -110,6 +110,53 @@ class Tank {
 	input(delta, keys) {
 		this.rotate(delta, keys);
 		this.move(delta, keys);
+		this.cameraMovement(delta, keys);
+	}
+
+	cameraMovement(delta, keys) {
+		var camrot = 30;
+		var cameraTrans = [0, 0, 0];
+		if (keys['U'.charCodeAt(0)]) {
+			cameraTrans[2] += 0.5 * delta;
+		}
+		if (keys['J'.charCodeAt(0)]) {
+			cameraTrans[2] -= 0.5 * delta;
+		}
+		if (keys['H'.charCodeAt(0)]) {
+			cameraTrans[0] += 0.5 * delta;
+		}
+		if (keys['K'.charCodeAt(0)]) {
+			cameraTrans[0] -= 0.5 * delta;
+		}
+		if (keys['O'.charCodeAt(0)]) {
+			cameraTrans[1] += 0.5 * delta;
+		}
+		if (keys['L'.charCodeAt(0)]) {
+			cameraTrans[1] -= 0.5 * delta;
+		}
+		if (keys['I'.charCodeAt(0)]) {
+			this.camera.rotateViewPos([0, camrot * delta, 0]);
+		}
+		if (keys['Y'.charCodeAt(0)]) {
+			this.camera.rotateViewPos([0, -camrot * delta, 0]);
+		}
+		if (keys['M'.charCodeAt(0)]) {
+			var trans = this.getTranslation();
+			var camera = new Camera({
+				viewPos: [
+					trans[0] + viewPos[0],
+					trans[1] + viewPos[1],
+					trans[2] + viewPos[2]
+				],
+				viewLook: this.getTranslation(),
+				viewUp: [0, 1, 0]
+			});
+			camera.rotateViewPos([0, 0, 0]);
+			camera.rotateViewPos(this.getRotation());
+			this.camera = camera;
+		}
+		this.camera.transCamera(cameraTrans);
+		this.camera.setLookAt(this.getTranslation());
 	}
 
 	rotate(delta, keys) {
