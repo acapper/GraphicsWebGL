@@ -23,7 +23,7 @@ void main()
 	vec4 texel = texture2D(sampler, fTexture);
 	vec4 diffuse_colour = vec4(texel.rgba);
 
-	vec4 ambient = vec4(diffuse_colour.rgb * 0.2, diffuse_colour.a);
+	vec4 ambient = vec4(diffuse_colour.rgb * 0.3, diffuse_colour.a);
 
 	vec4 totalDiffuse;
 	vec4 totalSpec;
@@ -38,7 +38,7 @@ void main()
 
 			// Calculate specular lighting
 			vec4 specular_colour = vec4(lightCol[i], 1.0);
-			float shininess = 3.0;						// smaller values give sharper specular responses, larger more spread out
+			float shininess = 10.0;						// smaller values give sharper specular responses, larger more spread out
 			vec3 V = normalize(-fPosition.xyz);						// Viewing vector is reverse of vertex position in eye space
 			vec3 R = reflect(-L, N);							// Calculate the reflected beam, N defines the plane (see diagram on labsheet)
 			vec4 specular = pow(max(dot(R, V), 0.0), shininess) * specular_colour;	// Calculate specular component
