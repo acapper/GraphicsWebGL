@@ -242,9 +242,9 @@ class Model {
 		gl.uniform3fv(this.lightPosL, lights.p);
 		gl.uniform1iv(this.lightOnL, lights.on);
 
-		gl.uniform1f(this.attenkcL, 0.05);
-		gl.uniform1f(this.attenklL, 0.05);
-		gl.uniform1f(this.attenkqL, 0.05);
+		gl.uniform1f(this.attenkcL, 1);
+		gl.uniform1f(this.attenklL, 0.5);
+		gl.uniform1f(this.attenkqL, 0.005);
 		gl = null;
 		world = null;
 		view = null;
