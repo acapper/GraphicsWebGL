@@ -51,32 +51,32 @@ class Light extends Model {
 		if (this.getOn() == 1) {
 			if (keys['1'.charCodeAt(0)]) {
 				var pos = this.getTranslation();
-				pos[2] += 0.5 * delta;
+				pos[2] += 1 * delta;
 				this.getTranslation(pos);
 			}
 			if (keys['2'.charCodeAt(0)]) {
 				var pos = this.getTranslation();
-				pos[2] -= 0.5 * delta;
+				pos[2] -= 1 * delta;
 				this.getTranslation(pos);
 			}
 			if (keys['3'.charCodeAt(0)]) {
 				var pos = this.getTranslation();
-				pos[0] += 0.5 * delta;
+				pos[0] += 1 * delta;
 				this.getTranslation(pos);
 			}
 			if (keys['4'.charCodeAt(0)]) {
 				var pos = this.getTranslation();
-				pos[0] -= 0.5 * delta;
+				pos[0] -= 1 * delta;
 				this.getTranslation(pos);
 			}
 			if (keys['5'.charCodeAt(0)]) {
 				var pos = this.getTranslation();
-				pos[1] -= 0.5 * delta;
+				pos[1] -= 1 * delta;
 				this.getTranslation(pos);
 			}
 			if (keys['6'.charCodeAt(0)]) {
 				var pos = this.getTranslation();
-				pos[1] += 0.5 * delta;
+				pos[1] += 1 * delta;
 				this.getTranslation(pos);
 			}
 		}
