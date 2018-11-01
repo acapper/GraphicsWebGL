@@ -46,4 +46,39 @@ class Light extends Model {
 		super.draw(gl, world, view, proj, lights);
 		program = null;
 	}
+
+	keyboard(delta, keys) {
+		if (this.getOn() == 1) {
+			if (keys['1'.charCodeAt(0)]) {
+				var pos = this.getTranslation();
+				pos[2] += 0.5 * delta;
+				this.getTranslation(pos);
+			}
+			if (keys['2'.charCodeAt(0)]) {
+				var pos = this.getTranslation();
+				pos[2] -= 0.5 * delta;
+				this.getTranslation(pos);
+			}
+			if (keys['3'.charCodeAt(0)]) {
+				var pos = this.getTranslation();
+				pos[0] += 0.5 * delta;
+				this.getTranslation(pos);
+			}
+			if (keys['4'.charCodeAt(0)]) {
+				var pos = this.getTranslation();
+				pos[0] -= 0.5 * delta;
+				this.getTranslation(pos);
+			}
+			if (keys['5'.charCodeAt(0)]) {
+				var pos = this.getTranslation();
+				pos[1] -= 0.5 * delta;
+				this.getTranslation(pos);
+			}
+			if (keys['6'.charCodeAt(0)]) {
+				var pos = this.getTranslation();
+				pos[1] += 0.5 * delta;
+				this.getTranslation(pos);
+			}
+		}
+	}
 }
