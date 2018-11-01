@@ -14,6 +14,7 @@ var light;
 var tank;
 var deer1;
 var deer2;
+var plane;
 
 var camera;
 var lightMove;
@@ -34,7 +35,8 @@ var Init = function() {
 		'models/T34/T34.json',
 		'models/lowpolydeer/deer.json',
 		'models/sphere/sphere.json',
-		'models/TankShell/TankShell.json'
+		'models/TankShell/TankShell.json',
+		'models/Plane/Plane.json'
 	]);
 
 	// Wait for external resources to load
@@ -82,7 +84,8 @@ var Init = function() {
 				promsR[6],
 				promsR[7],
 				promsR[8],
-				promsR[9]
+				promsR[9],
+				promsR[10]
 			);
 		})
 		// Catch any errors once the external resources have loaded
@@ -101,7 +104,8 @@ var Run = function(
 	tankjson,
 	deerjson,
 	spherejson,
-	bulletjson
+	bulletjson,
+	planejson
 ) {
 	// Create deer models
 	deer1 = new Model({
@@ -121,6 +125,15 @@ var Run = function(
 		rotation: [-90, 0, 0],
 		scale: [0.002, 0.002, 0.002],
 		translation: [-5, 0, 0]
+	});
+	plane = new Model({
+		gl,
+		texture: whiteTexture,
+		model: planejson,
+		shader: shader,
+		rotation: [0, 0, 0],
+		scale: [100, 100, 100],
+		translation: [0, 0, 0]
 	});
 
 	// Create tank model
@@ -246,6 +259,7 @@ var render = function() {
 	tank.draw(gl, world, view, proj, lightsJSON);
 	deer1.draw(gl, world, view, proj, lightsJSON);
 	deer2.draw(gl, world, view, proj, lightsJSON);
+	plane.draw(gl, world, view, proj, lightsJSON);
 };
 
 var update = function(delta) {
@@ -266,6 +280,7 @@ var update = function(delta) {
 	// TODO update model method to allow for static models to avoid unneeded updates
 	deer1.update();
 	deer2.update();
+	plane.update();
 
 	// Update camera matrix
 	view = tank.getCamera().getCameraMat();
