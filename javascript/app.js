@@ -61,6 +61,8 @@ var Init = function() {
 			$("[name='blueLightMove']").prop('checked', false);
 			$("[name='redLight']").prop('checked', true);
 			$("[name='redLightMove']").prop('checked', false);
+			$("[name='sunLight']").prop('checked', true);
+			$("[name='sunLightMove']").prop('checked', false);
 
 			// Set gl statemachine values
 			gl.clearColor(0, 0, 0, 1);
@@ -183,9 +185,25 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [0.25, 0.25, 0.25],
-			translation: [2, 3, 0]
+			translation: [8, 3, 0]
 		},
 		{ name: 'red', colour: [1, 0, 0], direction: [0, 0, 0], on: 1 }
+	);
+	// Add light to light tracker
+	lights.push(light);
+
+	// Create red light
+	light = new Light(
+		{
+			gl,
+			texture: whiteTexture,
+			model: spherejson,
+			shader: lightshader,
+			rotation: [0, 0, 0],
+			scale: [0.5, 0.5, 0.5],
+			translation: [0, 20, -20]
+		},
+		{ name: 'sun', colour: [1, 1, 0.9], direction: [0, 0, 0], on: 1 }
 	);
 	// Add light to light tracker
 	lights.push(light);
@@ -199,7 +217,7 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [0.25, 0.25, 0.25],
-			translation: [-2, 3, 0]
+			translation: [-8, 3, 0]
 		},
 		{ name: 'blue', colour: [0, 0, 1], direction: [0, 0, 0], on: 1 }
 	);
@@ -350,6 +368,25 @@ $("[name='redLight']").change(function() {
 	lightsJSON = getLightJSON();
 });
 
+$("[name='sunLight']").change(function() {
+	if (this.checked) {
+		// If checked draw
+		lights.forEach(e => {
+			if (e.getName() == 'sun') {
+				e.setOn(1);
+			}
+		});
+	} else {
+		// Else dont draw
+		lights.forEach(e => {
+			if (e.getName() == 'sun') {
+				e.setOn(0);
+			}
+		});
+	}
+	lightsJSON = getLightJSON();
+});
+
 $("[name='blueLight']").change(function() {
 	if (this.checked) {
 		// If checked draw
@@ -369,11 +406,12 @@ $("[name='blueLight']").change(function() {
 	lightsJSON = getLightJSON();
 });
 
-// Toggles wether the blue light should be moved with the light control keys
+// Toggles wether the light should be moved with the light control keys
 $("[name='blueLightMove']").change(function() {
 	if (this.checked) {
-		// If checked make sure blue movement checkbox is unticked
+		// If checked make sure other light movement checkbox is unticked
 		$("[name='redLightMove']").prop('checked', false);
+		$("[name='sunLightMove']").prop('checked', false);
 		// Set light to move to light name
 		lightMove = 'blue';
 	} else {
@@ -382,13 +420,41 @@ $("[name='blueLightMove']").change(function() {
 	}
 });
 
-// Toggles wether the red light should be moved with the light control keys
+// Toggles wether the light should be moved with the light control keys
 $("[name='redLightMove']").change(function() {
 	if (this.checked) {
-		// If checked make sure blue movement checkbox is unticked
+		// If checked make sure other light movement checkbox is unticked
 		$("[name='blueLightMove']").prop('checked', false);
+		$("[name='sunLightMove']").prop('checked', false);
 		// Set light to move to light name
 		lightMove = 'red';
+	} else {
+		// Else if it is unticked set light to move to null
+		lightMove = null;
+	}
+});
+
+// Toggles wether the light should be moved with the light control keys
+$("[name='sunLightMove']").change(function() {
+	if (this.checked) {
+		// If checked make sure other light movement checkbox is unticked
+		$("[name='blueLightMove']").prop('checked', false);
+		$("[name='redLightMove']").prop('checked', false);
+		// Set light to move to light name
+		lightMove = 'sun';
+	} else {
+		// Else if it is unticked set light to move to null
+		lightMove = null;
+	}
+});
+
+$("[name='sunLightMove']").change(function() {
+	if (this.checked) {
+		// If checked make sure other light movement checkbox is unticked
+		$("[name='blueLightMove']").prop('checked', false);
+		$("[name='redLightMove']").prop('checked', false);
+		// Set light to move to light name
+		lightMove = 'sun';
 	} else {
 		// Else if it is unticked set light to move to null
 		lightMove = null;
