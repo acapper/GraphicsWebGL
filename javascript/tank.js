@@ -67,7 +67,7 @@ class Tank {
 	}
 
 	getCamera() {
-		return this.camera;
+		return this.camera.getCameraMat();
 	}
 
 	setCamera(camera) {
