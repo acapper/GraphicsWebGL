@@ -1,6 +1,7 @@
 var rotMat = mat4.create();
 var scaleMat = mat4.create();
 var transMat = mat4.create();
+// Create a matrix 4x4 from rotation, translation and scale
 var mat4FromRotTransScale = function(mat, rot, trans, scale) {
 	mat4.identity(mat);
 	// Translate

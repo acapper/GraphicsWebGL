@@ -1,15 +1,16 @@
+// Holds logic for create opengl buffers, setting uniforms, transforming models and drawing triangle to the screen
 class Model {
 	/*{
-		gl,
+		gl: glContext,
 		texture: texture,
-		model: spherejson,
+		model: modeljson,
 		shader: shader,
 		rotation: [0, 0, 0],
 		scale: [0, 0, 0],
-		translation: [0, 0, 0],
-		meshIndices: null
-	};*/
+		translation: [0, 0, 0]
+	}*/
 	constructor(model) {
+		// Information about which buffers to to read from model file
 		this.bufferKeys = [
 			{
 				key: 'position',
@@ -31,6 +32,7 @@ class Model {
 			}
 		];
 
+		// Initialise attributes
 		this.meshIndices = model.meshIndices;
 		this.texture = model.texture;
 		this.glTexture = null;
@@ -43,13 +45,15 @@ class Model {
 		this.indexBuffer = [];
 		this.buffers = [];
 
+		// Allocate memory
 		this.model = mat4.create();
 		this.nmatrix4 = mat4.create();
 		this.nmatrix3 = mat3.create();
 
+		// Move to shader code
 		var program = this.shader.getProgram();
-		//Move to shader code
 		gl.useProgram(program);
+		// Store shader attribute locations
 		this.nmatrixL = gl.getUniformLocation(program, 'nmatrix');
 		this.viewL = gl.getUniformLocation(program, 'view');
 		this.worldL = gl.getUniformLocation(program, 'world');
@@ -63,7 +67,9 @@ class Model {
 		this.attenklL = gl.getUniformLocation(program, 'attenuation_kl');
 		this.attenkqL = gl.getUniformLocation(program, 'attenuation_kq');
 
+		// Create opengl buffers
 		this.createBuffers(gl, model.model);
+		// Bind texture
 		this.bindTexture(gl);
 	}
 
@@ -83,17 +89,26 @@ class Model {
 		this.translation = translation;
 	}
 
+	// Create opengl buffers
 	createBuffers(gl, model) {
 		var i = 0;
+		// For each mesh in model file
 		model.meshes.forEach(e => {
 			if (this.meshIndices == null || this.meshIndices.indexOf(i) > -1) {
+				// Get indicies
 				var modelIndicies = [].concat.apply([], e.faces);
+				// Get vertices
 				var modelVerts = e.vertices;
+				// Get texturecoords
 				var modelTextureCoords = e.texturecoords[0];
+				// Get normals
 				var modelNormals = e.normals;
 
+				// Store number of indexes in current mesh
 				this.indicesLength.push(modelIndicies.length);
+				// Create new index buffer
 				this.createNewIndexBuffer(gl);
+				// Bind mesh index list to last created index buffer
 				this.bindBufferData(
 					gl,
 					this.getLastIndexBuffer(),
@@ -101,21 +116,27 @@ class Model {
 					gl.ELEMENT_ARRAY_BUFFER
 				);
 
+				// Create new data buffer
 				this.createNewBuffer(gl);
+				// Bind mesh verts to last created data buffer
 				this.bindBufferData(
 					gl,
 					this.getLastBuffer(),
 					new Float32Array(modelVerts),
 					gl.ARRAY_BUFFER
 				);
+				// Create new data buffer
 				this.createNewBuffer(gl);
+				// Bind mesh TextureCoords to last created data buffer
 				this.bindBufferData(
 					gl,
 					this.getLastBuffer(),
 					new Float32Array(modelTextureCoords),
 					gl.ARRAY_BUFFER
 				);
+				// Create new data buffer
 				this.createNewBuffer(gl);
+				// Bind mesh Normals to last created data buffer
 				this.bindBufferData(
 					gl,
 					this.getLastBuffer(),
@@ -129,16 +150,19 @@ class Model {
 		model = null;
 	}
 
+	// Add a new opengl index buffer to index buffer list
 	createNewIndexBuffer(gl) {
 		this.indexBuffer.push(gl.createBuffer());
 		gl = null;
 	}
 
+	// Add a new opengl data buffer to data buffer list
 	createNewBuffer(gl) {
 		this.buffers.push(gl.createBuffer());
 		gl = null;
 	}
 
+	// Bind data of type to opengl buffer at bufferLocation
 	bindBufferData(gl, bufferL, data, type) {
 		gl.bindBuffer(type, bufferL);
 		gl.bufferData(type, data, gl.STATIC_DRAW);
@@ -148,28 +172,35 @@ class Model {
 		type = null;
 	}
 
+	// Returns the last buffer in data buffer list
 	getLastBuffer() {
 		return this.buffers[this.buffers.length - 1];
 	}
 
+	// Returns the last buffer in index buffer list
 	getLastIndexBuffer() {
 		return this.indexBuffer[this.indexBuffer.length - 1];
 	}
 
+	// Binds the index buffer at index i to opengl
 	bindIndexBuffers(gl, i) {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer[i]);
 		gl = null;
 		i = null;
 	}
 
+	// Bind attributes outlined in bufferKeys to opengl
 	bindArrayBuffers(gl, i) {
 		var program = this.shader.getProgram();
 		var j = 0;
 
+		// For each key item in bufferKeys
 		this.bufferKeys.forEach(e => {
+			// Get location of attribute
 			var location = gl.getAttribLocation(program, e.key);
 			//Work on error handling for missing attribs
 			if (location != -1) {
+				// Bind attribute to open gl
 				this.bindArrayBuffer(
 					gl,
 					this.buffers[i * this.bufferKeys.length + j],
@@ -189,6 +220,7 @@ class Model {
 		i = null;
 	}
 
+	// Bind vertex buffer object to opengl location
 	bindArrayBuffer(gl, vbo, attribL, numOfEls, size, offset) {
 		gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
 		gl.vertexAttribPointer(
@@ -208,14 +240,18 @@ class Model {
 		offset = null;
 	}
 
+	// Create and bind texture to opengl
 	bindTexture(gl) {
 		this.modelTexture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, this.modelTexture);
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+		// Set image wrap eg. strech, tile, center
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		// Set image filtering
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		// Bind image data
 		gl.texImage2D(
 			gl.TEXTURE_2D,
 			0,
@@ -228,6 +264,7 @@ class Model {
 		gl = null;
 	}
 
+	// Bind model uniforms
 	bindUniforms(gl, world, model, view, proj, lights) {
 		//Uniforms
 		gl.uniformMatrix4fv(this.projL, gl.FALSE, proj);
@@ -252,11 +289,24 @@ class Model {
 		lights = null;
 	}
 
+	// Draw model
+	// Lights is a list of lights to be used in shader
+	// Light format
+	/*{
+		c: [list of light colours]
+		d: [list of light directions]
+		p: [list of light positions]
+		on: [list of whether a light is on(1)/off(0)]
+	}*/
 	draw(gl, world, view, proj, lights) {
+		// Use shader
 		gl.useProgram(this.shader.getProgram());
+		// Bind texture
 		gl.bindTexture(gl.TEXTURE_2D, this.modelTexture);
 		gl.activeTexture(gl.TEXTURE0);
+		// For every buffer
 		for (var i = 0; i < this.indexBuffer.length; i++) {
+			// Calculate normal matrix
 			mat4.identity(this.nmatrix4);
 			mat4.mul(this.nmatrix4, this.nmatrix4, view);
 			mat4.mul(this.nmatrix4, this.nmatrix4, world);
@@ -266,10 +316,14 @@ class Model {
 			mat3.invert(this.nmatrix3, this.nmatrix3);
 			mat3.transpose(this.nmatrix3, this.nmatrix3);
 
+			// Bind data at location i
 			this.bindArrayBuffers(gl, i);
+			// Bind indexes at location i
 			this.bindIndexBuffers(gl, i);
+			// Bind uniforms
 			this.bindUniforms(gl, world, this.model, view, proj, lights);
 
+			// Draw bound data
 			gl.drawElements(
 				gl.TRIANGLES,
 				this.indicesLength[i],
@@ -284,7 +338,9 @@ class Model {
 		lights = null;
 	}
 
+	// Update model
 	update() {
+		// Update model transformation matrix
 		this.model = mat4FromRotTransScale(
 			this.model,
 			this.rotation,

@@ -1,13 +1,28 @@
 class Light extends Model {
+	/*{
+		// Model class input
+		gl: glContext,
+		texture: modelTexture,
+		model: modeljson,
+		shader: lightmodelshader,
+		rotation: [0, 0, 0],
+		scale: [0, 0, 0],
+		translation: [0, 0, 0]
+	},
+	// Light class input
+	{ name: lightname, colour: [0, 0, 0], direction: [0, 0, 0], on: on(1)/off(0) }*/
 	constructor(model, light) {
 		var gl = model.gl;
+		// Initialise parent class
 		super(model);
 
+		// Initialise attributes
 		this.name = light.name;
 		this.lightCol = light.colour;
 		this.lightDir = light.direction;
 		this.on = light.on;
 
+		// Get uniform locations
 		var program = this.shader.getProgram();
 		gl.useProgram(program);
 		this.colourL = gl.getUniformLocation(program, 'lightcolour');
@@ -39,6 +54,7 @@ class Light extends Model {
 		return this.name;
 	}
 
+	// Draw light model (optional)
 	draw(gl, world, view, proj, lights) {
 		var program = this.shader.getProgram();
 		gl.useProgram(program);
@@ -47,7 +63,9 @@ class Light extends Model {
 		program = null;
 	}
 
+	// Light keyboard input
 	keyboard(delta, keys) {
+		// Make sure light is on before moving
 		if (this.getOn() == 1) {
 			if (keys['1'.charCodeAt(0)]) {
 				var pos = this.getTranslation();
