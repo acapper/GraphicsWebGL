@@ -2,7 +2,7 @@
 var loadTextResource = function(url) {
 	return new Promise(function(resolve) {
 		var request = new XMLHttpRequest();
-		request.open('GET', url, true);
+		request.open('GET', url + '?no-cache=' + Math.random(), true);
 		request.onload = function() {
 			if (request.readyState === 4) {
 				if (request.status < 200 || request.status > 299) {
@@ -35,7 +35,7 @@ var loadImage = function(url) {
 			// If there was an error print to console
 			console.log(e);
 		};
-		image.src = url;
+		image.src = url + '?no-cache=' + Math.random();
 	});
 };
 
