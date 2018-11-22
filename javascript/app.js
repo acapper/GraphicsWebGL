@@ -26,18 +26,16 @@ var gl;
 var Init = function() {
 	// Load external resources
 	var proms = loadAll([
-		'textures/texture4.png',
-		'textures/texture2.png',
-		'textures/texture3.png',
+		'/textures/Rock/Rock_025_COLOR.jpg',
 		'shaders/vert.vert',
 		'shaders/frag.frag',
 		'shaders/light.frag',
-		'models/t34.json',
-		'models/deer.json',
 		'models/sphere.json',
-		'models/tankshell.json',
 		'models/plane.json',
-		'textures/texture.png'
+		'/textures/Rock/Rock_025_NORM.jpg',
+		'/textures/texture4.png',
+		'/textures/Stone Wall/Stone_Wall_009_COLOR.jpg',
+		'/textures/Stone Wall/Stone_Wall_009_NORM.jpg'
 	]);
 
 	// Wait for external resources to load
@@ -57,41 +55,30 @@ var Init = function() {
 				alert('Your browser does not support WebGL');
 			}
 
-			// Make sure html checkboxes start in correct state
-			$("[name='blueLight']").prop('checked', true);
-			$("[name='blueLightMove']").prop('checked', false);
-			$("[name='redLight']").prop('checked', true);
-			$("[name='redLightMove']").prop('checked', false);
-			$("[name='sunLight']").prop('checked', true);
-			$("[name='sunLightMove']").prop('checked', false);
-			$('#tankSpeedSlider')[0].value = 0.4;
-			tankSpeed.textContent = $('#tankSpeedSlider')[0].value;
-
 			// Set gl statemachine values
 			gl.clearColor(0, 0, 0, 1);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			gl.enable(gl.DEPTH_TEST);
-			gl.enable(gl.CULL_FACE);
+			//gl.enable(gl.CULL_FACE);
 			gl.frontFace(gl.CCW);
 			gl.cullFace(gl.BACK);
+			gl.enable(gl.MULTISAMPLE);
 
 			// Load and create shaders
-			var shader = new Shader(gl, promsR[3], promsR[4]);
-			var lightshader = new Shader(gl, promsR[3], promsR[5]);
+			var shader = new Shader(gl, promsR[1], promsR[2]);
+			var lightshader = new Shader(gl, promsR[1], promsR[3]);
 
 			// Run gl scene
 			Run(
 				promsR[0],
-				promsR[1],
-				promsR[2],
 				shader,
 				lightshader,
+				promsR[4],
+				promsR[5],
 				promsR[6],
 				promsR[7],
 				promsR[8],
-				promsR[9],
-				promsR[10],
-				promsR[11]
+				promsR[9]
 			);
 		})
 		// Catch any errors once the external resources have loaded
@@ -102,137 +89,66 @@ var Init = function() {
 
 // Create and run gl scene
 var Run = function(
-	whiteTexture,
-	tankTexture,
-	bulletTexture,
+	rockTexture,
 	shader,
 	lightshader,
-	tankjson,
-	deerjson,
 	spherejson,
-	bulletjson,
 	planejson,
-	pinkTexture
+	rockNormal,
+	white,
+	stoneWallTexture,
+	stoneWallNormal
 ) {
-	// Create deer models
-	deer1 = new Model({
+	var s = 20;
+
+	plane = new Mesh({
 		gl,
-		texture: pinkTexture,
-		model: deerjson,
-		shader: shader,
-		rotation: [-90, 0, 0],
-		scale: [0.002, 0.002, 0.002],
-		translation: [5, 0, 0]
-	});
-	deer2 = new Model({
-		gl,
-		texture: pinkTexture,
-		model: deerjson,
-		shader: shader,
-		rotation: [-90, 0, 0],
-		scale: [0.002, 0.002, 0.002],
-		translation: [-5, 0, 0]
-	});
-	plane = new Model({
-		gl,
-		texture: whiteTexture,
-		model: planejson,
+		texture: stoneWallTexture,
+		texturescale: s,
+		normalmap: stoneWallNormal,
+		mesh: planejson.meshes[0],
 		shader: shader,
 		rotation: [0, 0, 0],
-		scale: [100, 100, 100],
+		scale: [s, s, s],
+		translation: [0, -1, 0]
+	});
+
+	ball = new Mesh({
+		gl,
+		texture: rockTexture,
+		texturescale: 2,
+		normalmap: rockNormal,
+		mesh: spherejson.meshes[0],
+		shader: shader,
+		rotation: [0, 0, 0],
+		scale: [2, 2, 2],
 		translation: [0, 0, 0]
 	});
 
-	// Create tank model
-	tank = new Tank({
-		gl,
-		texture: tankTexture,
-		model: tankjson,
-		shader: shader,
-		top: {
-			rotation: [0, 0, 0],
-			scale: [0.006, 0.006, 0.006],
-			translation: [0, 0, -3],
-			indices: [0, 2, 3, 7, 9, 10, 13]
-		},
-		bot: {
-			rotation: [0, 0, 0],
-			scale: [0.006, 0.006, 0.006],
-			translation: [0, 0, -3],
-			indices: [1, 4, 5, 6, 8, 11, 12, 14]
-		},
-		bomb: {
-			texture: bulletTexture,
-			model: bulletjson,
-			rotation: [0, -90, -90],
-			scale: [0.05, 0.05, 0.05],
-			translation: [0, 1.36, 0.2],
-			light: {
-				name: 'bomb',
-				colour: [0.6, 0.3, 0],
-				direction: [0, 0, 0],
-				on: 0
-			}
-		},
-		camera: {
-			position: viewPos
-		}
-	});
-
 	// Create red light
 	light = new Light(
 		{
 			gl,
-			texture: whiteTexture,
-			model: spherejson,
-			shader: lightshader,
-			rotation: [0, 0, 0],
-			scale: [0.25, 0.25, 0.25],
-			translation: [8, 3, 0]
-		},
-		{ name: 'red', colour: [1, 0, 0], direction: [0, 0, 0], on: 1 }
-	);
-	// Add light to light tracker
-	lights.push(light);
-
-	// Create red light
-	light = new Light(
-		{
-			gl,
-			texture: whiteTexture,
-			model: spherejson,
+			texture: white,
+			mesh: spherejson.meshes[0],
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [0.5, 0.5, 0.5],
-			translation: [0, 20, -20]
+			translation: [100, 500, -100]
 		},
-		{ name: 'sun', colour: [1, 1, 0.9], direction: [0, 0, 0], on: 1 }
+		{ name: 'sun', colour: [1, 0.9, 0.8], direction: [0, 0, 0], on: 1 }
 	);
 	// Add light to light tracker
 	lights.push(light);
-
-	// Create blue light
-	light = new Light(
-		{
-			gl,
-			texture: whiteTexture,
-			model: spherejson,
-			shader: lightshader,
-			rotation: [0, 0, 0],
-			scale: [0.25, 0.25, 0.25],
-			translation: [-8, 3, 0]
-		},
-		{ name: 'blue', colour: [0, 0, 1], direction: [0, 0, 0], on: 1 }
-	);
-	// Add light to light tracker
-	lights.push(light);
-
-	// Add tank bullet light to light tracker
-	lights.push(tank.getBomb());
 
 	// Create world, view and project matrix
 	mat4.identity(world);
-	view = tank.getCamera();
+	camera = new Camera({
+		viewPos: [0, 3, -6],
+		viewLook: [0, 0, 0],
+		viewUp: [0, 1, 0]
+	});
+	view = camera.getCameraMat();
 	mat4.perspective(
 		proj,
 		glMatrix.toRadian(90),
@@ -271,18 +187,14 @@ var render = function() {
 	// Transform world matrix
 	world = mat4FromRotTransScale(world, [0, 0, 0], [0, 0, 0], [1, 1, 1]);
 
-	// Draw each light except the tank bomb
 	// TODO improve so that each light has property draw/notdraw
 	lights.forEach(e => {
-		if (e.name != 'bomb' && e.on != 0)
-			e.draw(gl, world, view, proj, lightsJSON);
+		e.draw(gl, world, view, proj, lightsJSON);
 	});
 
 	// Draw models
-	tank.draw(gl, world, view, proj, lightsJSON);
-	deer1.draw(gl, world, view, proj, lightsJSON);
-	deer2.draw(gl, world, view, proj, lightsJSON);
 	plane.draw(gl, world, view, proj, lightsJSON);
+	ball.draw(gl, world, view, proj, lightsJSON);
 };
 
 var update = function(delta) {
@@ -295,18 +207,14 @@ var update = function(delta) {
 		// If the light is the one currently selected to move check for keyevents
 		if (lightMove && e.name == lightMove) e.keyboard(delta, keys);
 	});
+	var rot = ball.getRotation();
+	ball.setRotation([(rot[0] += 30 * delta), rot[1], (rot[2] += 50 * delta)]);
+	var rot = plane.getRotation();
+	plane.setRotation([rot[0], (rot[1] += 10 * delta), rot[2]]);
 
-	// Update tank pass in current key states
-	tank.update(delta, keys);
-
-	// Update deer models
 	// TODO update model method to allow for static models to avoid unneeded updates
-	deer1.update();
-	deer2.update();
 	plane.update();
-
-	// Update camera matrix
-	view = tank.getCamera();
+	ball.update();
 };
 
 // Converts lights into format needed for opengl uniform arrays
@@ -349,109 +257,3 @@ window.addEventListener(
 	},
 	false
 );
-
-// TODO Combine with light class
-// Toggles wether the red light should be drawn and used in shader
-$("[name='redLight']").change(function() {
-	if (this.checked) {
-		// If checked draw
-		lights.forEach(e => {
-			if (e.getName() == 'red') {
-				e.setOn(1);
-			}
-		});
-	} else {
-		// Else dont draw
-		lights.forEach(e => {
-			if (e.getName() == 'red') {
-				e.setOn(0);
-			}
-		});
-	}
-	lightsJSON = getLightJSON();
-});
-
-$("[name='sunLight']").change(function() {
-	if (this.checked) {
-		// If checked draw
-		lights.forEach(e => {
-			if (e.getName() == 'sun') {
-				e.setOn(1);
-			}
-		});
-	} else {
-		// Else dont draw
-		lights.forEach(e => {
-			if (e.getName() == 'sun') {
-				e.setOn(0);
-			}
-		});
-	}
-	lightsJSON = getLightJSON();
-});
-
-$("[name='blueLight']").change(function() {
-	if (this.checked) {
-		// If checked draw
-		lights.forEach(e => {
-			if (e.getName() == 'blue') {
-				e.setOn(1);
-			}
-		});
-	} else {
-		// Else dont draw
-		lights.forEach(e => {
-			if (e.getName() == 'blue') {
-				e.setOn(0);
-			}
-		});
-	}
-	lightsJSON = getLightJSON();
-});
-
-// Toggles wether the light should be moved with the light control keys
-$("[name='blueLightMove']").change(function() {
-	if (this.checked) {
-		// If checked make sure other light movement checkbox is unticked
-		$("[name='redLightMove']").prop('checked', false);
-		$("[name='sunLightMove']").prop('checked', false);
-		// Set light to move to light name
-		lightMove = 'blue';
-	} else {
-		// Else if it is unticked set light to move to null
-		lightMove = null;
-	}
-});
-
-// Toggles wether the light should be moved with the light control keys
-$("[name='redLightMove']").change(function() {
-	if (this.checked) {
-		// If checked make sure other light movement checkbox is unticked
-		$("[name='blueLightMove']").prop('checked', false);
-		$("[name='sunLightMove']").prop('checked', false);
-		// Set light to move to light name
-		lightMove = 'red';
-	} else {
-		// Else if it is unticked set light to move to null
-		lightMove = null;
-	}
-});
-
-// Toggles wether the light should be moved with the light control keys
-$("[name='sunLightMove']").change(function() {
-	if (this.checked) {
-		// If checked make sure other light movement checkbox is unticked
-		$("[name='blueLightMove']").prop('checked', false);
-		$("[name='redLightMove']").prop('checked', false);
-		// Set light to move to light name
-		lightMove = 'sun';
-	} else {
-		// Else if it is unticked set light to move to null
-		lightMove = null;
-	}
-});
-
-$('#tankSpeedSlider').change(function() {
-	tankSpeed.textContent = $('#tankSpeedSlider')[0].value;
-	tank.setTankSpeed($('#tankSpeedSlider')[0].value);
-});
