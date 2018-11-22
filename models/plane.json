@@ -113,14 +113,14 @@
 			]
 			,"texturecoords": [
 				[
-					 0
-					,0
-					,1
-					,0
-					,1
-					,1
-					,0
-					,1
+					 0.0001
+					,0.0001
+					,0.9999
+					,0.0001
+					,0.9999
+					,0.9999
+					,0.0001
+					,0.9999
 				]
 			]
 			,"faces": [
@@ -285,7 +285,7 @@
 					,"semantic": 1
 					,"index": 0
 					,"type": 3
-					,"value": "E:\\GitHub Repos\\Graphics WebGL\\texture4.png"
+					,"value": "E:\\GitHub Repos\\Graphics WebGL\\textures\\Rock\\Rock_025_COLOR.jpg"
 				}
 			]
 		}
