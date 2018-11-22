@@ -2,7 +2,8 @@ precision mediump float;
 
 const int MAX_LIGHTS = 10;  
 
-uniform sampler2D sampler;
+uniform sampler2D textureSampler;
+uniform sampler2D normalSampler;
 
 uniform vec3 lightCol[MAX_LIGHTS];
 uniform vec3 lightDir[MAX_LIGHTS];
@@ -17,13 +18,15 @@ varying vec3 fNormal;
 varying vec4 fPosition;
 varying mat4 fWorld;
 varying mat4 fView;
+varying mat3 fTangSpace;
 
 void main()
 {
-	vec4 texel = texture2D(sampler, fTexture);
+	vec4 texel = texture2D(textureSampler, fTexture);
+	vec3 normal = normalize(texture2D(normalSampler, fTexture).xyz*2.0 - 1.0);
 	vec4 diffuse_colour = vec4(texel.rgba);
 
-	vec4 ambient = vec4(diffuse_colour.rgb * 0.3, diffuse_colour.a);
+	vec4 ambient = vec4(diffuse_colour.rgb * 0.1, diffuse_colour.a);
 
 	vec4 totalDiffuse;
 	vec4 totalSpec;
@@ -31,15 +34,15 @@ void main()
 	{	
 		if(lightOn[i] == 1){
 			vec4 lightPosH = fView * fWorld * vec4(lightPos[i], 1.0);
-			vec3 N = normalize(fNormal);			// Be careful with the order of multiplication!
-			vec3 L = normalize(lightPosH.xyz - fPosition.xyz);					// Ensure light_dir is unit length
+			vec3 N = normalize(normal);			// Be careful with the order of multiplication!
+			vec3 L = fTangSpace * normalize(lightPosH.xyz - fPosition.xyz);					// Ensure light_dir is unit length
 			float intensity = max(dot(L, N), 0.0);
 			vec4 diffuse = (intensity * vec4(lightCol[i], 1.0)) + intensity * diffuse_colour;
 
 			// Calculate specular lighting
 			vec4 specular_colour = vec4(lightCol[i], 1.0);
-			float shininess = 1.0;						// smaller values give sharper specular responses, larger more spread out
-			vec3 V = normalize(-fPosition.xyz);						// Viewing vector is reverse of vertex position in eye space
+			float shininess = 10.0;						// smaller values give sharper specular responses, larger more spread out
+			vec3 V = fTangSpace * normalize(-fPosition.xyz);						// Viewing vector is reverse of vertex position in eye space
 			vec3 R = reflect(-L, N);							// Calculate the reflected beam, N defines the plane (see diagram on labsheet)
 			vec4 specular = pow(max(dot(R, V), 0.0), shininess) * specular_colour;	// Calculate specular component
 
@@ -54,9 +57,12 @@ void main()
 	}
 
 	gl_FragColor = ambient + totalDiffuse + totalSpec;
+	//gl_FragColor = vec4(totalDiffuse.xyz, 1.0);
 	//gl_FragColor = vec4(totalSpec.xyz, 1.0);
-	//gl_FragColor = vec4(specular.xyz, 1.0);
 	//gl_FragColor = ambient + diffuse + specular;
 	//gl_FragColor = vec4(fNormal, 1.0);
+	//gl_FragColor = vec4(normal, 1.0);
+	//gl_FragColor = vec4(texel.xyz, 1.0);
+	//gl_FragColor = texel;
 }
 

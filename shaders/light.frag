@@ -4,7 +4,6 @@ uniform vec3 lightCol;
 uniform vec3 lightDir;
 uniform vec3 lightcolour;
 
-varying vec3 fNormal;
 varying vec4 fPosition;
 varying vec4 flight;
 
