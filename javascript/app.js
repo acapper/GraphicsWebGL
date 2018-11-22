@@ -26,16 +26,16 @@ var gl;
 var Init = function() {
 	// Load external resources
 	var proms = loadAll([
-		'/textures/Rock/Rock_025_COLOR.jpg',
+		'textures/Rock/Rock_025_COLOR.jpg',
 		'shaders/vert.vert',
 		'shaders/frag.frag',
 		'shaders/light.frag',
 		'models/sphere.json',
 		'models/plane.json',
-		'/textures/Rock/Rock_025_NORM.jpg',
-		'/textures/texture4.png',
-		'/textures/Stone Wall/Stone_Wall_009_COLOR.jpg',
-		'/textures/Stone Wall/Stone_Wall_009_NORM.jpg'
+		'textures/Rock/Rock_025_NORM.jpg',
+		'textures/texture4.png',
+		'textures/Stone Wall/Stone_Wall_009_COLOR.jpg',
+		'textures/Stone Wall/Stone_Wall_009_NORM.jpg'
 	]);
 
 	// Wait for external resources to load
