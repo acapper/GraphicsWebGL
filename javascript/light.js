@@ -1,4 +1,4 @@
-class Light extends Model {
+class Light extends Mesh {
 	/*{
 		// Model class input
 		gl: glContext,
