@@ -59,7 +59,7 @@ var Init = function() {
 			gl.clearColor(0, 0, 0, 1);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			gl.enable(gl.DEPTH_TEST);
-			//gl.enable(gl.CULL_FACE);
+			gl.enable(gl.CULL_FACE);
 			gl.frontFace(gl.CCW);
 			gl.cullFace(gl.BACK);
 			gl.enable(gl.MULTISAMPLE);
@@ -116,12 +116,12 @@ var Run = function(
 	ball = new Mesh({
 		gl,
 		texture: rockTexture,
-		texturescale: 2,
+		texturescale: 3,
 		normalmap: rockNormal,
 		mesh: spherejson.meshes[0],
 		shader: shader,
 		rotation: [0, 0, 0],
-		scale: [2, 2, 2],
+		scale: [1, 1, 1],
 		translation: [0, 0, 0]
 	});
 
@@ -134,7 +134,8 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [0.5, 0.5, 0.5],
-			translation: [100, 500, -100]
+			//translation: [100, 500, -100]
+			translation: [1, 5, -1]
 		},
 		{ name: 'sun', colour: [1, 0.9, 0.8], direction: [0, 0, 0], on: 1 }
 	);
@@ -201,6 +202,8 @@ var update = function(delta) {
 	// Convert all lights to correct format for opengl shader
 	lightsJSON = getLightJSON();
 
+	keyboard(delta);
+
 	// Update each light
 	lights.forEach(e => {
 		e.update();
@@ -208,13 +211,14 @@ var update = function(delta) {
 		if (lightMove && e.name == lightMove) e.keyboard(delta, keys);
 	});
 	var rot = ball.getRotation();
-	ball.setRotation([(rot[0] += 30 * delta), rot[1], (rot[2] += 50 * delta)]);
+	ball.setRotation([rot[0], rot[1], rot[2]]);
 	var rot = plane.getRotation();
-	plane.setRotation([rot[0], (rot[1] += 10 * delta), rot[2]]);
+	plane.setRotation([rot[0], rot[1], rot[2]]);
 
 	// TODO update model method to allow for static models to avoid unneeded updates
 	plane.update();
 	ball.update();
+	view = camera.getCameraMat();
 };
 
 // Converts lights into format needed for opengl uniform arrays
@@ -237,6 +241,41 @@ var getLightJSON = function() {
 		p,
 		on
 	};
+};
+
+var keyboard = function(delta) {
+	if (keys['W'.charCodeAt(0)]) {
+		camera.forward(1 * delta * 3);
+	}
+	if (keys['S'.charCodeAt(0)]) {
+		camera.forward(-1 * delta * 3);
+	}
+	if (keys[32]) {
+		camera.up(1 * delta * 3);
+	}
+	if (keys[16]) {
+		camera.up(-1 * delta * 3);
+	}
+	if (keys['A'.charCodeAt(0)]) {
+		camera.sideways(-1 * delta * 3);
+	}
+	if (keys['D'.charCodeAt(0)]) {
+		camera.sideways(1 * delta * 3);
+	}
+	if (keys['E'.charCodeAt(0)]) {
+		camera.rotateLookAt([0, -50 * delta, 0]);
+	}
+	if (keys['Q'.charCodeAt(0)]) {
+		camera.rotateLookAt([0, 50 * delta, 0]);
+	}
+	if (keys['R'.charCodeAt(0)]) {
+		var speed = -50 * delta;
+		camera.rotateLookAtVertical(speed);
+	}
+	if (keys['F'.charCodeAt(0)]) {
+		var speed = 50 * delta;
+		camera.rotateLookAtVertical(speed);
+	}
 };
 
 // Bind keydown event to window
