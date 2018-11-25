@@ -93,7 +93,7 @@ class Camera {
 	}
 
 	// 3d rotate camera lokkat [xaxisangle, yaxisangle, zaxisangle]
-	rotateLookAt(rot) {
+	rotateLookAtHorizontal(rot) {
 		// Convert lookat to homogeneous coordinates
 		var viewLookH = [
 			this.viewLook[0] - this.viewPos[0],
@@ -104,14 +104,18 @@ class Camera {
 		// Create rotation matrix
 		this.rotMat = this.rotateMat(
 			this.rotMat,
-			glMatrix.toRadian(rot[0]),
-			glMatrix.toRadian(rot[1]),
-			glMatrix.toRadian(rot[2])
+			glMatrix.toRadian(this.viewUp[0] * rot[0]),
+			glMatrix.toRadian(this.viewUp[1] * rot[1]),
+			glMatrix.toRadian(this.viewUp[2] * rot[2])
 		);
 		// Transform homogeneous lookat
 		vec4.transformMat4(viewLookH, viewLookH, this.rotMat);
 		// Covert lookat to vec3
-		this.viewLook = [viewLookH[0], viewLookH[1], viewLookH[2]];
+		this.viewLook = [
+			viewLookH[0] + this.viewPos[0],
+			viewLookH[1] + this.viewPos[1],
+			viewLookH[2] + this.viewPos[2]
+		];
 		viewLookH = null;
 		rot = null;
 	}
@@ -140,7 +144,12 @@ class Camera {
 		// Transform homogeneous lookat
 		vec4.transformMat4(viewLookH, viewLookH, this.rotMat);
 		// Covert lookat to vec3
-		this.viewLook = [viewLookH[0], viewLookH[1], viewLookH[2]];
+		this.viewLook = [
+			viewLookH[0] + this.viewPos[0],
+			viewLookH[1] + this.viewPos[1],
+			viewLookH[2] + this.viewPos[2]
+		];
+
 		viewLookH = null;
 		rot = null;
 	}
