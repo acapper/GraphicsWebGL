@@ -213,6 +213,9 @@ var Run = function(
 	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
+	gl.getExtension('OES_texture_float');
+	gl.getExtension('OES_texture_float_linear');
+
 	for (var i = 0; i < 6; i++) {
 		gl.texImage2D(
 			gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -222,7 +225,7 @@ var Run = function(
 			2048,
 			0,
 			gl.RGBA,
-			gl.UNSIGNED_BYTE,
+			gl.FLOAT,
 			null
 		);
 	}
@@ -370,7 +373,7 @@ var genShadowMap = function() {
 			shadowMapRenderBuffer
 		);
 
-		gl.clearColor(0, 0, 0, 1);
+		gl.clearColor(1, 1, 1, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		ball.shadowGen(gl, world, shadowgen.getProgram());
