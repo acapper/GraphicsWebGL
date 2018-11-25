@@ -62,7 +62,7 @@ void main()
 
 			//gl_FragColor = vec4(shadowMapValue, shadowMapValue, shadowMapValue, 1.0);
 
-			if(shadowMapValue + 0.005 >= lightDist){
+			if(shadowMapValue + 0.01 >= lightDist){
 				totalDiffuse += attenuation * diffuse;
 				totalSpec += attenuation * specular;
 			}
