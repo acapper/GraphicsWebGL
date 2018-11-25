@@ -263,9 +263,10 @@ class Mesh {
 		gl = null;
 	}
 
-	draw(gl, world, view, proj, lights) {
+	draw(gl, world, view, proj, lights, shadowMapCube, shadowClip) {
 		// Use shader
 		gl.useProgram(this.shader.getProgram());
+
 		// Bind texture
 		gl.activeTexture(gl.TEXTURE0);
 		if (this.meshTexture) {
@@ -274,6 +275,21 @@ class Mesh {
 		gl.activeTexture(gl.TEXTURE1);
 		if (this.normalTexture) {
 			gl.bindTexture(gl.TEXTURE_2D, this.normalTexture);
+		}
+
+		if (shadowMapCube && shadowClip) {
+			var shadowClipL = gl.getUniformLocation(
+				this.shader.getProgram(),
+				'shadowClip'
+			);
+			gl.uniform2fv(shadowClipL, shadowClip);
+			var shadowMapL = gl.getUniformLocation(
+				this.shader.getProgram(),
+				'shadowMap'
+			);
+			gl.uniform1i(shadowMapL, 2);
+			gl.activeTexture(gl.TEXTURE2);
+			gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
 		}
 
 		// Calculate normal matrix
@@ -296,6 +312,31 @@ class Mesh {
 		]);
 
 		this.bindUniforms(gl, world, this.model, view, proj, lights);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices);
+
+		// Draw bound data
+		gl.drawElements(gl.TRIANGLES, this.indicesNum, gl.UNSIGNED_SHORT, 0);
+	}
+
+	shadowGen(gl, world, shaderProgram) {
+		// Use shader
+		gl.useProgram(shaderProgram);
+
+		var worldL = gl.getUniformLocation(shadowgen.getProgram(), 'world');
+		gl.uniformMatrix4fv(worldL, gl.FALSE, world);
+
+		var modelL = gl.getUniformLocation(shadowgen.getProgram(), 'model');
+		gl.uniformMatrix4fv(modelL, gl.FALSE, this.model);
+
+		// Bind data at location i
+		this.bindArrayBuffers(gl, [
+			this.vertBuffer,
+			this.textBuffer,
+			this.normBuffer,
+			this.tangentBuffer,
+			this.binormalBuffer
+		]);
+
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices);
 
 		// Draw bound data
