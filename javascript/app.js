@@ -170,68 +170,6 @@ var Run = function(
 	// Add light to light tracker
 	lights.push(light);
 
-	shadowMapCameras = [
-		//Positive X
-		new Camera({
-			viewPos: light.getPosition(),
-			viewLook: vec3.add(
-				vec3.create(),
-				light.getPosition(),
-				vec3.fromValues(1, 0, 0)
-			),
-			viewUp: [0, -1, 0]
-		}),
-		//Negative X
-		new Camera({
-			viewPos: light.getPosition(),
-			viewLook: vec3.add(
-				vec3.create(),
-				light.getPosition(),
-				vec3.fromValues(-1, 0, 0)
-			),
-			viewUp: [0, -1, 0]
-		}),
-		//Positive Y
-		new Camera({
-			viewPos: light.getPosition(),
-			viewLook: vec3.add(
-				vec3.create(),
-				light.getPosition(),
-				vec3.fromValues(0, 1, 0)
-			),
-			viewUp: [0, 0, 1]
-		}),
-		//Negative Y
-		new Camera({
-			viewPos: light.getPosition(),
-			viewLook: vec3.add(
-				vec3.create(),
-				light.getPosition(),
-				vec3.fromValues(0, -1, 0)
-			),
-			viewUp: [0, 0, -1]
-		}),
-		//Positive Z
-		new Camera({
-			viewPos: light.getPosition(),
-			viewLook: vec3.add(
-				vec3.create(),
-				light.getPosition(),
-				vec3.fromValues(0, 0, 1)
-			),
-			viewUp: [0, -1, 0]
-		}),
-		//Negative Z
-		new Camera({
-			viewPos: light.getPosition(),
-			viewLook: vec3.add(
-				vec3.create(),
-				light.getPosition(),
-				vec3.fromValues(0, 0, -1)
-			),
-			viewUp: [0, -1, 0]
-		})
-	];
 	shadowClip = vec2.fromValues(0.05, 50.0);
 	shadowMapProj = mat4.create();
 	mat4.perspective(
@@ -325,6 +263,69 @@ var draw = function(now) {
 };
 
 var genShadowMap = function() {
+	shadowMapCameras = [
+		//Positive X
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(1, 0, 0)
+			),
+			viewUp: [0, -1, 0]
+		}),
+		//Negative X
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(-1, 0, 0)
+			),
+			viewUp: [0, -1, 0]
+		}),
+		//Positive Y
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, 1, 0)
+			),
+			viewUp: [0, 0, 1]
+		}),
+		//Negative Y
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, -1, 0)
+			),
+			viewUp: [0, 0, -1]
+		}),
+		//Positive Z
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, 0, 1)
+			),
+			viewUp: [0, -1, 0]
+		}),
+		//Negative Z
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, 0, -1)
+			),
+			viewUp: [0, -1, 0]
+		})
+	];
+
 	gl.useProgram(shadowgen.getProgram());
 	gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
 	gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapFrameBuffer);
@@ -424,6 +425,7 @@ var update = function(delta) {
 	ball.update();
 	ball2.update();
 	view = camera.getCameraMat();
+	light.keyboard(delta, keys);
 };
 
 // Converts lights into format needed for opengl uniform arrays
