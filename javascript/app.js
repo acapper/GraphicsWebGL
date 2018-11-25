@@ -22,6 +22,15 @@ var lightMove;
 var keys = [];
 var gl;
 
+var shadowgen;
+var shadowMapCameras;
+
+var shadowMapCube;
+var shadowMapRenderBuffer;
+var shadowMapFrameBuffer;
+var shadowMapProj;
+var shadowClip;
+
 // Initialise resources needed for opengl scene
 var Init = function() {
 	// Load external resources
@@ -35,7 +44,11 @@ var Init = function() {
 		'textures/Rock/Rock_025_NORM.jpg',
 		'textures/texture4.png',
 		'textures/Stone Wall/Stone_Wall_009_COLOR.jpg',
-		'textures/Stone Wall/Stone_Wall_009_NORM.jpg'
+		'textures/Stone Wall/Stone_Wall_009_NORM.jpg',
+		'shaders/shadow.vert',
+		'shaders/shadow.frag',
+		'shaders/shadowmapgen.vert',
+		'shaders/shadowmapgen.frag'
 	]);
 
 	// Wait for external resources to load
@@ -62,11 +75,12 @@ var Init = function() {
 			gl.enable(gl.CULL_FACE);
 			gl.frontFace(gl.CCW);
 			gl.cullFace(gl.BACK);
-			gl.enable(gl.MULTISAMPLE);
 
 			// Load and create shaders
 			var shader = new Shader(gl, promsR[1], promsR[2]);
 			var lightshader = new Shader(gl, promsR[1], promsR[3]);
+			var shadowshader = new Shader(gl, promsR[10], promsR[11]);
+			shadowgen = new Shader(gl, promsR[12], promsR[13]);
 
 			// Run gl scene
 			Run(
@@ -78,7 +92,8 @@ var Init = function() {
 				promsR[6],
 				promsR[7],
 				promsR[8],
-				promsR[9]
+				promsR[9],
+				shadowshader
 			);
 		})
 		// Catch any errors once the external resources have loaded
@@ -97,7 +112,8 @@ var Run = function(
 	rockNormal,
 	white,
 	stoneWallTexture,
-	stoneWallNormal
+	stoneWallNormal,
+	shadowshader
 ) {
 	var s = 20;
 
@@ -107,7 +123,7 @@ var Run = function(
 		texturescale: s,
 		normalmap: stoneWallNormal,
 		mesh: planejson.meshes[0],
-		shader: shader,
+		shader: shadowshader,
 		rotation: [0, 0, 0],
 		scale: [s, s, s],
 		translation: [0, -1, 0]
@@ -119,10 +135,22 @@ var Run = function(
 		texturescale: 3,
 		normalmap: rockNormal,
 		mesh: spherejson.meshes[0],
-		shader: shader,
+		shader: shadowshader,
 		rotation: [0, 0, 0],
 		scale: [1, 1, 1],
 		translation: [0, 0, 0]
+	});
+
+	ball2 = new Mesh({
+		gl,
+		texture: rockTexture,
+		texturescale: 3,
+		normalmap: rockNormal,
+		mesh: spherejson.meshes[0],
+		shader: shadowshader,
+		rotation: [0, 0, 0],
+		scale: [2, 2, 2],
+		translation: [3, -1, -5]
 	});
 
 	// Create red light
@@ -135,17 +163,89 @@ var Run = function(
 			rotation: [0, 0, 0],
 			scale: [0.5, 0.5, 0.5],
 			//translation: [100, 500, -100]
-			translation: [1, 5, -1]
+			translation: [0, 5, 0]
 		},
 		{ name: 'sun', colour: [1, 0.9, 0.8], direction: [0, 0, 0], on: 1 }
 	);
 	// Add light to light tracker
 	lights.push(light);
 
+	shadowMapCameras = [
+		//Positive X
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(1, 0, 0)
+			),
+			viewUp: [0, -1, 0]
+		}),
+		//Negative X
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(-1, 0, 0)
+			),
+			viewUp: [0, -1, 0]
+		}),
+		//Positive Y
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, 1, 0)
+			),
+			viewUp: [0, 0, 1]
+		}),
+		//Negative Y
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, -1, 0)
+			),
+			viewUp: [0, 0, -1]
+		}),
+		//Positive Z
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, 0, 1)
+			),
+			viewUp: [0, -1, 0]
+		}),
+		//Negative Z
+		new Camera({
+			viewPos: light.getPosition(),
+			viewLook: vec3.add(
+				vec3.create(),
+				light.getPosition(),
+				vec3.fromValues(0, 0, -1)
+			),
+			viewUp: [0, -1, 0]
+		})
+	];
+	shadowClip = vec2.fromValues(0.05, 20.0);
+	shadowMapProj = mat4.create();
+	mat4.perspective(
+		shadowMapProj,
+		glMatrix.toRadian(90),
+		1.0,
+		shadowClip[0],
+		shadowClip[1]
+	);
+
 	// Create world, view and project matrix
 	mat4.identity(world);
 	camera = new Camera({
-		viewPos: [0, 3, -6],
+		viewPos: [0, 2, 2],
 		viewLook: [0, 0, 0],
 		viewUp: [0, 1, 0]
 	});
@@ -157,6 +257,48 @@ var Run = function(
 		0.1,
 		10000.0
 	);
+
+	shadowMapCube = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
+	// Set image wrap eg. strech, tile, center
+	gl.texParameteri(
+		gl.TEXTURE_CUBE_MAP,
+		gl.TEXTURE_WRAP_S,
+		gl.MIRRORED_REPEAT
+	);
+	gl.texParameteri(
+		gl.TEXTURE_CUBE_MAP,
+		gl.TEXTURE_WRAP_T,
+		gl.MIRRORED_REPEAT
+	);
+	// Set image filtering
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+	for (var i = 0; i < 6; i++) {
+		gl.texImage2D(
+			gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
+			0,
+			gl.RGBA,
+			512,
+			512,
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			null
+		);
+	}
+
+	shadowMapFrameBuffer = gl.createFramebuffer();
+	gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapFrameBuffer);
+
+	shadowMapRenderBuffer = gl.createRenderbuffer();
+	gl.bindRenderbuffer(gl.RENDERBUFFER, shadowMapRenderBuffer);
+	gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 512, 512);
+
+	gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 
 	// Start draw loop
 	requestAnimationFrame(draw);
@@ -171,12 +313,73 @@ var draw = function(now) {
 	const fps = 1 / deltaTime; // compute frames per second
 	fpsElem.textContent = fps.toFixed(1); // update fps display
 
+	genShadowMap();
+	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
 	// Update loop
 	update(deltaTime);
 	// Render loop
 	render();
 	// Get next frame
 	requestAnimationFrame(draw);
+};
+
+var genShadowMap = function() {
+	gl.useProgram(shadowgen.getProgram());
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
+	gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapFrameBuffer);
+	gl.bindRenderbuffer(gl.RENDERBUFFER, shadowMapRenderBuffer);
+
+	gl.viewport(0, 0, 512, 512);
+	gl.enable(gl.DEPTH_TEST);
+	gl.enable(gl.CULL_FACE);
+
+	var shadowClipL = gl.getUniformLocation(
+		shadowgen.getProgram(),
+		'shadowClip'
+	);
+	gl.uniform2fv(shadowClipL, shadowClip);
+
+	var lightPosL = gl.getUniformLocation(shadowgen.getProgram(), 'lightPos');
+	gl.uniform3fv(lightPosL, light.getPosition());
+
+	var projL = gl.getUniformLocation(shadowgen.getProgram(), 'proj');
+	gl.uniformMatrix4fv(projL, gl.FALSE, shadowMapProj);
+
+	for (var i = 0; i < shadowMapCameras.length; i++) {
+		var viewL = gl.getUniformLocation(shadowgen.getProgram(), 'view');
+		gl.uniformMatrix4fv(
+			viewL,
+			gl.FALSE,
+			shadowMapCameras[i].getCameraMat()
+		);
+
+		gl.framebufferTexture2D(
+			gl.FRAMEBUFFER,
+			gl.COLOR_ATTACHMENT0,
+			gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
+			shadowMapCube,
+			0
+		);
+
+		gl.framebufferRenderbuffer(
+			gl.FRAMEBUFFER,
+			gl.DEPTH_ATTACHMENT,
+			gl.RENDERBUFFER,
+			shadowMapRenderBuffer
+		);
+
+		gl.clearColor(0, 0, 0, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		ball.shadowGen(gl, world, shadowgen.getProgram());
+		ball2.shadowGen(gl, world, shadowgen.getProgram());
+		plane.shadowGen(gl, world, shadowgen.getProgram());
+	}
+
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+	gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 };
 
 // Draw models onto gl canvas
@@ -194,8 +397,9 @@ var render = function() {
 	});
 
 	// Draw models
-	plane.draw(gl, world, view, proj, lightsJSON);
-	ball.draw(gl, world, view, proj, lightsJSON);
+	ball.draw(gl, world, view, proj, lightsJSON, shadowMapCube, shadowClip);
+	ball2.draw(gl, world, view, proj, lightsJSON, shadowMapCube, shadowClip);
+	plane.draw(gl, world, view, proj, lightsJSON, shadowMapCube, shadowClip);
 };
 
 var update = function(delta) {
@@ -218,6 +422,7 @@ var update = function(delta) {
 	// TODO update model method to allow for static models to avoid unneeded updates
 	plane.update();
 	ball.update();
+	ball2.update();
 	view = camera.getCameraMat();
 };
 
@@ -263,17 +468,17 @@ var keyboard = function(delta) {
 		camera.sideways(1 * delta * 3);
 	}
 	if (keys['E'.charCodeAt(0)]) {
-		camera.rotateLookAt([0, -50 * delta, 0]);
+		camera.rotateLookAtHorizontal([0, -50 * delta, 0]);
 	}
 	if (keys['Q'.charCodeAt(0)]) {
-		camera.rotateLookAt([0, 50 * delta, 0]);
+		camera.rotateLookAtHorizontal([0, 50 * delta, 0]);
 	}
 	if (keys['R'.charCodeAt(0)]) {
-		var speed = -50 * delta;
+		var speed = 50 * delta;
 		camera.rotateLookAtVertical(speed);
 	}
 	if (keys['F'.charCodeAt(0)]) {
-		var speed = 50 * delta;
+		var speed = -50 * delta;
 		camera.rotateLookAtVertical(speed);
 	}
 };
