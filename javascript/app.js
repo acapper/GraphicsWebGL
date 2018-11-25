@@ -150,7 +150,7 @@ var Run = function(
 		shader: shadowshader,
 		rotation: [0, 0, 0],
 		scale: [2, 2, 2],
-		translation: [3, -1, -5]
+		translation: [0, -1, -5]
 	});
 
 	// Create red light
@@ -163,7 +163,7 @@ var Run = function(
 			rotation: [0, 0, 0],
 			scale: [0.5, 0.5, 0.5],
 			//translation: [100, 500, -100]
-			translation: [0, 5, 0]
+			translation: [-3, 1, 5]
 		},
 		{ name: 'sun', colour: [1, 0.9, 0.8], direction: [0, 0, 0], on: 1 }
 	);
@@ -232,7 +232,7 @@ var Run = function(
 			viewUp: [0, -1, 0]
 		})
 	];
-	shadowClip = vec2.fromValues(0.05, 20.0);
+	shadowClip = vec2.fromValues(0.05, 50.0);
 	shadowMapProj = mat4.create();
 	mat4.perspective(
 		shadowMapProj,
@@ -280,8 +280,8 @@ var Run = function(
 			gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
 			0,
 			gl.RGBA,
-			512,
-			512,
+			2048,
+			2048,
 			0,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
@@ -294,7 +294,7 @@ var Run = function(
 
 	shadowMapRenderBuffer = gl.createRenderbuffer();
 	gl.bindRenderbuffer(gl.RENDERBUFFER, shadowMapRenderBuffer);
-	gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 512, 512);
+	gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 2048, 2048);
 
 	gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -330,7 +330,7 @@ var genShadowMap = function() {
 	gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapFrameBuffer);
 	gl.bindRenderbuffer(gl.RENDERBUFFER, shadowMapRenderBuffer);
 
-	gl.viewport(0, 0, 512, 512);
+	gl.viewport(0, 0, 2048, 2048);
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.CULL_FACE);
 
