@@ -120,7 +120,7 @@ var Run = function(
 	plane = new Mesh({
 		gl,
 		texture: stoneWallTexture,
-		texturescale: s,
+		texturescale: 10,
 		normalmap: stoneWallNormal,
 		mesh: planejson.meshes[0],
 		shader: shadowshader,
@@ -132,7 +132,7 @@ var Run = function(
 	ball = new Mesh({
 		gl,
 		texture: rockTexture,
-		texturescale: 3,
+		texturescale: 1,
 		normalmap: rockNormal,
 		mesh: spherejson.meshes[0],
 		shader: shadowshader,
@@ -144,7 +144,7 @@ var Run = function(
 	ball2 = new Mesh({
 		gl,
 		texture: rockTexture,
-		texturescale: 3,
+		texturescale: 1,
 		normalmap: rockNormal,
 		mesh: spherejson.meshes[0],
 		shader: shadowshader,
