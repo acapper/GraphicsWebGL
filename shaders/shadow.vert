@@ -1,7 +1,5 @@
 precision mediump float;
 
-const int MAX_LIGHTS = 10;  
-
 attribute vec3 position;
 attribute vec2 texture;
 attribute vec3 normal;
@@ -17,6 +15,7 @@ uniform mat3 nmatrix;
 varying vec2 fTexture;
 varying vec3 fNormal;
 varying vec4 fPosition;
+varying vec4 fPositionShadow;
 varying mat4 fWorld;
 varying mat4 fView;
 varying mat3 fTangSpace;
@@ -36,6 +35,7 @@ void main()
 
 	fWorld = world;
 	fView = view;
-	fPosition = world * model * vec4(position, 1.0);	
+	fPosition = view * world * model * vec4(position, 1.0);	
+	fPositionShadow =  world * model * vec4(position, 1.0);	
 	gl_Position = proj * view * world * model * vec4(position, 1.0);
 }
