@@ -77,3 +77,6 @@ typings/
 
 # Ignore old files
 old/
+
+# Ignore Photoshop files
+*.psd
