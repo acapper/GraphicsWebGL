@@ -81,6 +81,7 @@ class Mesh {
 		this.attenklL = gl.getUniformLocation(program, 'attenuation_kl');
 		this.textureSampler = gl.getUniformLocation(program, 'textureSampler');
 		this.normalSampler = gl.getUniformLocation(program, 'normalSampler');
+		this.shadowClipL = gl.getUniformLocation(program, 'shadowClip');
 		gl.uniform1i(this.textureSampler, 0); // texture unit 0
 		gl.uniform1i(this.normalSampler, 1); // texture unit 1
 
@@ -208,7 +209,7 @@ class Mesh {
 	}
 
 	// Bind model uniforms
-	bindUniforms(gl, world, model, view, proj, lights) {
+	bindUniforms(gl, world, model, view, proj, lights, shadowClip) {
 		//Uniforms
 		gl.uniformMatrix4fv(this.projL, gl.FALSE, proj);
 		gl.uniformMatrix4fv(this.viewL, gl.FALSE, view);
@@ -217,14 +218,20 @@ class Mesh {
 
 		gl.uniformMatrix3fv(this.nmatrixL, gl.FALSE, this.nmatrix3);
 
-		gl.uniform3fv(this.lightColL, lights.c);
-		gl.uniform3fv(this.lightDirL, lights.d);
-		gl.uniform3fv(this.lightPosL, lights.p);
-		gl.uniform1iv(this.lightOnL, lights.on);
+		if (lights) {
+			gl.uniform3fv(this.lightColL, lights.c);
+			gl.uniform3fv(this.lightDirL, lights.d);
+			gl.uniform3fv(this.lightPosL, lights.p);
+			gl.uniform1iv(this.lightOnL, lights.on);
+		}
 
-		gl.uniform1f(this.attenkcL, 0.005);
+		if (shadowClip) {
+			gl.uniform2fv(this.shadowClipL, shadowClip);
+		}
+
+		gl.uniform1f(this.attenkcL, 2);
 		gl.uniform1f(this.attenklL, 0.5);
-		gl.uniform1f(this.attenkqL, 0.005);
+		gl.uniform1f(this.attenkqL, 1);
 		gl = null;
 		world = null;
 		view = null;
@@ -263,7 +270,7 @@ class Mesh {
 		gl = null;
 	}
 
-	draw(gl, world, view, proj, lights, shadowMapCube, shadowClip) {
+	draw(gl, world, view, proj, lights, shadowMaps, shadowClip) {
 		// Use shader
 		gl.useProgram(this.shader.getProgram());
 
@@ -277,19 +284,16 @@ class Mesh {
 			gl.bindTexture(gl.TEXTURE_2D, this.normalTexture);
 		}
 
-		if (shadowMapCube && shadowClip) {
-			var shadowClipL = gl.getUniformLocation(
-				this.shader.getProgram(),
-				'shadowClip'
-			);
-			gl.uniform2fv(shadowClipL, shadowClip);
-			var shadowMapL = gl.getUniformLocation(
-				this.shader.getProgram(),
-				'shadowMap'
-			);
-			gl.uniform1i(shadowMapL, 2);
-			gl.activeTexture(gl.TEXTURE2);
-			gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
+		if (shadowMaps) {
+			for (var i = 0; i < shadowMaps.length; i++) {
+				var shadowMapL = gl.getUniformLocation(
+					this.shader.getProgram(),
+					'shadowMap' + i
+				);
+				gl.uniform1i(shadowMapL, 2 + i);
+				gl.activeTexture(gl.TEXTURE2 + i);
+				gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMaps[i]);
+			}
 		}
 
 		// Calculate normal matrix
@@ -311,7 +315,15 @@ class Mesh {
 			this.binormalBuffer
 		]);
 
-		this.bindUniforms(gl, world, this.model, view, proj, lights);
+		this.bindUniforms(
+			gl,
+			world,
+			this.model,
+			view,
+			proj,
+			lights,
+			shadowClip
+		);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices);
 
 		// Draw bound data
