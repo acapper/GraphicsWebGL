@@ -232,9 +232,10 @@ var Run = function(
 
 	// Create world, view and project matrix
 	mat4.identity(world);
+	var pos = [6, 5, 8];
 	camera = new Camera({
-		viewPos: [0, 2, 2],
-		viewLook: [0, 0, 0],
+		viewPos: pos,
+		viewLook: vec3.add(vec3.create(), pos, [-1, -1, -1]),
 		viewUp: [0, 1, 0]
 	});
 	view = camera.getCameraMat();
