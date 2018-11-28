@@ -34,7 +34,7 @@ void main()
 	vec4 texel = texture2D(textureSampler, fTexture);
 	vec3 normal = normalize(texture2D(normalSampler, fTexture).xyz*2.0 - 1.0);
 	vec4 diffuse_colour = vec4(texel.rgba);
-	vec4 ambient = vec4(diffuse_colour.rgb * 0.1, diffuse_colour.a);
+	vec4 ambient = vec4(diffuse_colour.rgb * 0.05, diffuse_colour.a);
 
 	vec4 totalDiffuse;
 	vec4 totalSpec;
@@ -76,7 +76,7 @@ void main()
 				totalDiffuse += attenuation * diffuse;
 				totalSpec += attenuation * specular;
 			}else{
-				totalDiffuse += attenuation * diffuse * 0.4;
+				totalDiffuse += attenuation * diffuse * 0.05;
 			}
 		}
 	}
