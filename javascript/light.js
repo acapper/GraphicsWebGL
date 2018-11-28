@@ -40,6 +40,10 @@ class Light extends Mesh {
 		return this.lightCol;
 	}
 
+	setColour(c) {
+		this.lightCol = c;
+	}
+
 	getDirection() {
 		return this.lightDir;
 	}
@@ -178,7 +182,6 @@ class Light extends Mesh {
 				this.getTranslation(pos);
 			}
 		}
-		this.createShadowCameras();
 	}
 
 	createShadowCameras() {
@@ -247,6 +250,7 @@ class Light extends Mesh {
 	}
 
 	genShadowMap(models, world) {
+		this.createShadowCameras();
 		gl.useProgram(this.shadowgen.getProgram());
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.shadowMapCube);
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowMapFrameBuffer);
