@@ -21,9 +21,58 @@ class Light extends Mesh {
 		this.lightCol = light.colour;
 		this.lightDir = light.direction;
 		this.on = light.on;
+		this.attenuation = light.attenuation;
 
 		this.shadowgen = light.shadowgen;
+		this.shadowclip = light.shadowclip;
 
+		this.shadowMapCreate();
+
+		// Get uniform locations
+		var program = this.shader.getProgram();
+		gl.useProgram(program);
+		this.colourL = gl.getUniformLocation(program, 'lightcolour');
+		program = null;
+		gl = null;
+	}
+
+	getColour() {
+		return this.lightCol;
+	}
+
+	getDirection() {
+		return this.lightDir;
+	}
+
+	getPosition() {
+		return this.translation;
+	}
+
+	getOn() {
+		return this.on;
+	}
+
+	setOn(on) {
+		this.on = on;
+	}
+
+	getName() {
+		return this.name;
+	}
+
+	getShadowMap() {
+		return this.shadowMapCube;
+	}
+
+	getAttenuation() {
+		return this.attenuation;
+	}
+
+	getShadowClip() {
+		return this.shadowclip;
+	}
+
+	shadowMapCreate() {
 		this.shadowMapCube = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.shadowMapCube);
 		// Set image wrap eg. strech, tile, center
@@ -75,40 +124,14 @@ class Light extends Mesh {
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 		this.createShadowCameras();
 
-		// Get uniform locations
-		var program = this.shader.getProgram();
-		gl.useProgram(program);
-		this.colourL = gl.getUniformLocation(program, 'lightcolour');
-		program = null;
-		gl = null;
-	}
-
-	getColour() {
-		return this.lightCol;
-	}
-
-	getDirection() {
-		return this.lightDir;
-	}
-
-	getPosition() {
-		return this.translation;
-	}
-
-	getOn() {
-		return this.on;
-	}
-
-	setOn(on) {
-		this.on = on;
-	}
-
-	getName() {
-		return this.name;
-	}
-
-	getShadowMap() {
-		return this.shadowMapCube;
+		this.shadowMapProj = mat4.create();
+		mat4.perspective(
+			this.shadowMapProj,
+			glMatrix.toRadian(90),
+			1.0,
+			this.shadowclip[0],
+			this.shadowclip[1]
+		);
 	}
 
 	// Draw light model (optional)
@@ -223,7 +246,7 @@ class Light extends Mesh {
 		];
 	}
 
-	genShadowMap(models, world, shadowClip) {
+	genShadowMap(models, world) {
 		gl.useProgram(this.shadowgen.getProgram());
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.shadowMapCube);
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowMapFrameBuffer);
@@ -237,7 +260,7 @@ class Light extends Mesh {
 			this.shadowgen.getProgram(),
 			'shadowClip'
 		);
-		gl.uniform2fv(shadowClipL, shadowClip);
+		gl.uniform2fv(shadowClipL, this.shadowclip);
 
 		var lightPosL = gl.getUniformLocation(
 			this.shadowgen.getProgram(),
@@ -246,7 +269,7 @@ class Light extends Mesh {
 		gl.uniform3fv(lightPosL, this.getPosition());
 
 		var projL = gl.getUniformLocation(this.shadowgen.getProgram(), 'proj');
-		gl.uniformMatrix4fv(projL, gl.FALSE, shadowMapProj);
+		gl.uniformMatrix4fv(projL, gl.FALSE, this.shadowMapProj);
 
 		for (var i = 0; i < this.shadowMapCameras.length; i++) {
 			var viewL = gl.getUniformLocation(
