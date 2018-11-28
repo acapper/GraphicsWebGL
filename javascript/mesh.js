@@ -79,6 +79,7 @@ class Mesh {
 		this.lightOnL = gl.getUniformLocation(program, 'lightOn');
 		this.attenkcL = gl.getUniformLocation(program, 'attenuation_kc');
 		this.attenklL = gl.getUniformLocation(program, 'attenuation_kl');
+		this.attenkqL = gl.getUniformLocation(program, 'attenuation_kq');
 		this.textureSampler = gl.getUniformLocation(program, 'textureSampler');
 		this.normalSampler = gl.getUniformLocation(program, 'normalSampler');
 		this.shadowClipL = gl.getUniformLocation(program, 'shadowClip');
@@ -229,9 +230,9 @@ class Mesh {
 			gl.uniform2fv(this.shadowClipL, shadowClip);
 		}
 
-		gl.uniform1f(this.attenkcL, 2);
-		gl.uniform1f(this.attenklL, 0.5);
-		gl.uniform1f(this.attenkqL, 1);
+		gl.uniform1f(this.attenkcL, 1.0);
+		gl.uniform1f(this.attenklL, 0.1);
+		gl.uniform1f(this.attenkqL, 0.01);
 		gl = null;
 		world = null;
 		view = null;
