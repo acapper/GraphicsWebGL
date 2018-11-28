@@ -21,13 +21,6 @@ var keys = [];
 var gl;
 
 var shadowgen;
-var shadowMapCameras;
-
-var shadowMapCube;
-var shadowMapRenderBuffer;
-var shadowMapFrameBuffer;
-var shadowMapProj;
-var shadowClip;
 
 // Initialise resources needed for opengl scene
 var Init = function() {
@@ -41,8 +34,8 @@ var Init = function() {
 		'models/plane.json',
 		'textures/Rock/Rock_025_NORM.jpg',
 		'textures/texture4.png',
-		'textures/Stone Floor/Stone_Floor_002_COLOR.jpg',
-		'textures/Stone Floor/Stone_Floor_002_NORM.jpg',
+		'textures/Grass/Grass_001_COLOR.jpg',
+		'textures/Grass/Grass_001_NORM.jpg',
 		'shaders/shadow.vert',
 		'shaders/shadow.frag',
 		'shaders/shadowmapgen.vert',
@@ -54,7 +47,14 @@ var Init = function() {
 		'textures/FullMoon/FullMoonBack2048.png',
 		'textures/FullMoon/FullMoonFront2048.png',
 		'shaders/skybox.vert',
-		'shaders/skybox.frag'
+		'shaders/skybox.frag',
+		'models/tent.json',
+		'textures/Dome_Tent/1510_dome_tent_02_D.png',
+		'textures/Dome_Tent/1510_dome_tent_N.png',
+		'models/lantern.json',
+		'textures/lantern/lantern_Base_Color.jpg',
+		'textures/lantern/lantern_Normal_OpenGL.jpg',
+		'models/rocks.json'
 	]);
 
 	// Wait for external resources to load
@@ -79,8 +79,8 @@ var Init = function() {
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			gl.enable(gl.DEPTH_TEST);
 			//gl.enable(gl.CULL_FACE);
-			gl.frontFace(gl.CCW);
-			gl.cullFace(gl.BACK);
+			//gl.frontFace(gl.CCW);
+			//gl.cullFace(gl.BACK);
 
 			// Load and create shaders
 			var shader = new Shader(gl, promsR[1], promsR[2]);
@@ -109,7 +109,14 @@ var Init = function() {
 					promsR[18],
 					promsR[19]
 				],
-				skyboxshader
+				skyboxshader,
+				promsR[22],
+				promsR[23],
+				promsR[24],
+				promsR[25],
+				promsR[26],
+				promsR[27],
+				promsR[28]
 			);
 		})
 		// Catch any errors once the external resources have loaded
@@ -127,49 +134,80 @@ var Run = function(
 	planejson,
 	rockNormal,
 	white,
-	stoneFloorTexture,
-	stoneFloorNormal,
+	grassTexture,
+	grassNormal,
 	shadowshader,
 	skyboxTextures,
-	skyboxshader
+	skyboxshader,
+	tentjson,
+	tentTexture,
+	tentNormal,
+	lanternjson,
+	lanternTexture,
+	lanternNormal,
+	rocksjson
 ) {
 	var s = 20;
 
 	plane = new Mesh({
 		gl,
-		texture: stoneFloorTexture,
-		texturescale: 10,
-		normalmap: stoneFloorNormal,
+		texture: grassTexture,
+		texturescale: 5,
+		normalmap: grassNormal,
 		mesh: planejson.meshes[0],
 		shader: shadowshader,
 		rotation: [0, 0, 0],
 		scale: [s, s, s],
-		translation: [0, -1, 0]
+		translation: [0, 0, 0],
+		shininess: 10,
+		emmissive: [0, 0, 0]
 	});
 
-	ball = new Mesh({
+	tent = new Mesh({
+		gl,
+		texture: tentTexture,
+		texturescale: 1,
+		normalmap: tentNormal,
+		mesh: tentjson.meshes[0],
+		shader: shadowshader,
+		rotation: [0, 60, 0],
+		scale: [0.05, 0.05, 0.05],
+		translation: [-8.5, 0, -8],
+		shininess: 10000,
+		emmissive: [0, 0, 0]
+	});
+
+	rocks = new Mesh({
 		gl,
 		texture: rockTexture,
 		texturescale: 1,
 		normalmap: rockNormal,
-		mesh: spherejson.meshes[0],
+		mesh: rocksjson.meshes[0],
 		shader: shadowshader,
 		rotation: [0, 0, 0],
-		scale: [1, 1, 1],
-		translation: [0, 0, 0]
+		scale: [0.15, 0.2, 0.15],
+		translation: [5, 0, -2],
+		shininess: 10000,
+		emmissive: [0, 0, 0]
 	});
 
-	ball2 = new Mesh({
+	lantern = new Model({
 		gl,
-		texture: rockTexture,
+		texture: lanternTexture,
 		texturescale: 1,
-		normalmap: rockNormal,
-		mesh: spherejson.meshes[0],
-		shader: shadowshader,
-		rotation: [0, 0, 0],
-		scale: [2, 2, 2],
-		translation: [0, -1, -5]
+		normalmap: lanternNormal,
+		meshes: lanternjson.meshes,
+		shader: shader,
+		rotation: [0, 125, 0],
+		scale: [0.01, 0.01, 0.01],
+		translation: [-4, 0, -7],
+		shininess: 10,
+		emmissive: [0, 0, 0]
 	});
+
+	var lm = lantern.getMeshes();
+	lm[0].setEmmissive([1, 0.9, 0.7]);
+	lantern.setMeshes(lm);
 
 	light = new Light(
 		{
@@ -178,14 +216,20 @@ var Run = function(
 			mesh: spherejson.meshes[0],
 			shader: lightshader,
 			rotation: [0, 0, 0],
-			scale: [0.5, 0.5, 0.5],
-			translation: [-3, 20, 5]
+			scale: [0.2, 0.2, 0.2],
+			translation: [-4, 0.5, -7],
+			shininess: 10,
+			emmissive: [0, 0, 0]
 		},
 		{
-			name: 'sun',
-			colour: [1, 0.9, 0.8],
+			name: 'lamp',
+			colour: [1, 0.9, 0.7],
+			//colour: [1, 0.0, 0.0],
+			//colour: [0, 0, 0],
 			direction: [0, 0, 0],
 			on: 1,
+			attenuation: [1.0, 0.1, 0.05],
+			shadowclip: [0.05, 50.0],
 			shadowgen
 		}
 	);
@@ -200,18 +244,49 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [15, 15, 15],
-			translation: [-500, 160, -178]
+			translation: [-500, 160, -178],
+			shininess: 10,
+			emmissive: [0, 0, 0]
 		},
 		{
-			name: 'sun',
-			colour: [1, 0, 0],
+			name: 'moon',
+			colour: [0.7, 0.7, 0.9],
+			//colour: [0.7, 0.0, 0.0],
 			direction: [0, 0, 0],
 			on: 1,
+			attenuation: [1, 0.00001, 0.0001],
+			shadowclip: [0.05, 750.0],
 			shadowgen
 		}
 	);
 	// Add light to light tracker
 	lights.push(light2);
+
+	light3 = new Light(
+		{
+			gl,
+			texture: white,
+			mesh: spherejson.meshes[0],
+			shader: lightshader,
+			rotation: [0, 0, 0],
+			scale: [1, 1, 1],
+			translation: [5, 0.75, -2],
+			shininess: 10,
+			emmissive: [0, 0, 0]
+		},
+		{
+			name: 'campfire',
+			colour: [0.7, 0.4, 0],
+			//colour: [0.7, 0.0, 0.0],
+			direction: [0, 0, 0],
+			on: 1,
+			attenuation: [1, 0.1, 0.01],
+			shadowclip: [0.05, 50.0],
+			shadowgen
+		}
+	);
+	// Add light to light tracker
+	lights.push(light3);
 
 	skybox = new Skybox({
 		gl,
@@ -219,16 +294,6 @@ var Run = function(
 		mesh: planejson.meshes[0],
 		shader: skyboxshader
 	});
-
-	shadowClip = vec2.fromValues(0.05, 50.0);
-	shadowMapProj = mat4.create();
-	mat4.perspective(
-		shadowMapProj,
-		glMatrix.toRadian(90),
-		1.0,
-		shadowClip[0],
-		shadowClip[1]
-	);
 
 	// Create world, view and project matrix
 	mat4.identity(world);
@@ -260,12 +325,11 @@ var draw = function(now) {
 	const fps = 1 / deltaTime; // compute frames per second
 	fpsElem.textContent = fps.toFixed(1); // update fps display
 
-	shadowMapCube = light.genShadowMap([ball, ball2, plane], world, shadowClip);
-	shadowMapCube2 = light2.genShadowMap(
-		[ball, ball2, plane],
-		world,
-		shadowClip
-	);
+	var lm = lantern.getMeshes();
+	var shadowmeshes = [tent, lm[1], lm[2], lm[3], lm[4], lm[5], plane, rocks];
+	light.genShadowMap(shadowmeshes, world);
+	light2.genShadowMap(shadowmeshes, world);
+	light3.genShadowMap(shadowmeshes, world);
 	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
 	// Update loop
@@ -286,38 +350,16 @@ var render = function() {
 	world = mat4FromRotTransScale(world, [0, 0, 0], [0, 0, 0], [1, 1, 1]);
 
 	// TODO improve so that each light has property draw/notdraw
-	lights.forEach(e => {
-		e.draw(gl, world, view, proj, lightsJSON);
-	});
+	/*lights.forEach(e => {
+		if (e.getName() == 'campfire')
+			e.draw(gl, world, view, proj, lightsJSON);
+	});*/
 
 	// Draw models
-	ball.draw(
-		gl,
-		world,
-		view,
-		proj,
-		lightsJSON,
-		[shadowMapCube, shadowMapCube2],
-		shadowClip
-	);
-	ball2.draw(
-		gl,
-		world,
-		view,
-		proj,
-		lightsJSON,
-		[shadowMapCube, shadowMapCube2],
-		shadowClip
-	);
-	plane.draw(
-		gl,
-		world,
-		view,
-		proj,
-		lightsJSON,
-		[shadowMapCube, shadowMapCube2],
-		shadowClip
-	);
+	tent.draw(gl, world, view, proj, lightsJSON);
+	plane.draw(gl, world, view, proj, lightsJSON);
+	lantern.draw(gl, world, view, proj, lightsJSON);
+	rocks.draw(gl, world, view, proj, lightsJSON);
 	skybox.draw(gl, world, view, proj);
 };
 
@@ -333,16 +375,17 @@ var update = function(delta) {
 		// If the light is the one currently selected to move check for keyevents
 		if (lightMove && e.name == lightMove) e.keyboard(delta, keys);
 	});
-	var rot = ball.getRotation();
-	ball.setRotation([rot[0], rot[1], rot[2]]);
+	var rot = tent.getRotation();
+	tent.setRotation([rot[0], rot[1], rot[2]]);
 	var rot = plane.getRotation();
 	plane.setRotation([rot[0], rot[1], rot[2]]);
 
 	// TODO update model method to allow for static models to avoid unneeded updates
 	plane.update();
-	ball.update();
-	ball2.update();
+	tent.update();
+	lantern.update();
 	skybox.update();
+	rocks.update();
 	view = camera.getCameraMat();
 	light.keyboard(delta, keys);
 };
@@ -353,40 +396,49 @@ var getLightJSON = function() {
 	var d = [];
 	var p = [];
 	var on = [];
+	var a = [];
+	var sm = [];
+	var sc = [];
 
 	lights.forEach(e => {
 		c = c.concat(e.getColour());
 		d = d.concat(e.getDirection());
 		p = p.concat(e.getPosition());
 		on = on.concat(e.getOn());
+		a = a.concat(e.getAttenuation());
+		sm = sm.concat(e.getShadowMap());
+		sc = sc.concat(e.getShadowClip());
 	});
 
 	return {
 		c,
 		d,
 		p,
-		on
+		on,
+		a,
+		sm,
+		sc
 	};
 };
 
 var keyboard = function(delta) {
 	if (keys['W'.charCodeAt(0)]) {
-		camera.forward(1 * delta * 3);
+		camera.forward(1 * delta * 5);
 	}
 	if (keys['S'.charCodeAt(0)]) {
-		camera.forward(-1 * delta * 3);
+		camera.forward(-1 * delta * 5);
 	}
 	if (keys[32]) {
-		camera.up(1 * delta * 3);
+		camera.up(1 * delta * 5);
 	}
 	if (keys[16]) {
-		camera.up(-1 * delta * 3);
+		camera.up(-1 * delta * 5);
 	}
 	if (keys['A'.charCodeAt(0)]) {
-		camera.sideways(-1 * delta * 3);
+		camera.sideways(-1 * delta * 5);
 	}
 	if (keys['D'.charCodeAt(0)]) {
-		camera.sideways(1 * delta * 3);
+		camera.sideways(1 * delta * 5);
 	}
 	if (keys['E'.charCodeAt(0)]) {
 		camera.rotateLookAtHorizontal([0, -50 * delta, 0]);
