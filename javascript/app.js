@@ -54,7 +54,10 @@ var Init = function() {
 		'models/lantern.json',
 		'textures/lantern/lantern_Base_Color.jpg',
 		'textures/lantern/lantern_Normal_OpenGL.jpg',
-		'models/rocks.json'
+		'models/rocks.json',
+		'shaders/fire.vert',
+		'shaders/fire.frag',
+		'textures/fire.png'
 	]);
 
 	// Wait for external resources to load
@@ -88,6 +91,7 @@ var Init = function() {
 			var shadowshader = new Shader(gl, promsR[10], promsR[11]);
 			shadowgen = new Shader(gl, promsR[12], promsR[13]);
 			var skyboxshader = new Shader(gl, promsR[20], promsR[21]);
+			var fireShader = new Shader(gl, promsR[29], promsR[30]);
 
 			// Run gl scene
 			Run(
@@ -116,7 +120,9 @@ var Init = function() {
 				promsR[25],
 				promsR[26],
 				promsR[27],
-				promsR[28]
+				promsR[28],
+				fireShader,
+				promsR[31]
 			);
 		})
 		// Catch any errors once the external resources have loaded
@@ -145,14 +151,17 @@ var Run = function(
 	lanternjson,
 	lanternTexture,
 	lanternNormal,
-	rocksjson
+	rocksjson,
+	fireShader,
+	fireTexture
 ) {
-	var s = 20;
+	var s = 20 * 100;
+	s;
 
 	plane = new Mesh({
 		gl,
 		texture: grassTexture,
-		texturescale: 5,
+		texturescale: s / 4,
 		normalmap: grassNormal,
 		mesh: planejson.meshes[0],
 		shader: shadowshader,
@@ -161,6 +170,16 @@ var Run = function(
 		translation: [0, 0, 0],
 		shininess: 10,
 		emmissive: [0, 0, 0]
+	});
+
+	fire = new Fire({
+		gl,
+		texture: fireTexture,
+		shader: fireShader,
+		center: [5, 0, -2],
+		maxpoints: 500,
+		radius: 1,
+		maxheight: 2
 	});
 
 	tent = new Mesh({
@@ -197,7 +216,7 @@ var Run = function(
 		texturescale: 1,
 		normalmap: lanternNormal,
 		meshes: lanternjson.meshes,
-		shader: shader,
+		shader: shadowshader,
 		rotation: [0, 125, 0],
 		scale: [0.01, 0.01, 0.01],
 		translation: [-4, 0, -7],
@@ -217,7 +236,7 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [0.2, 0.2, 0.2],
-			translation: [-4, 0.5, -7],
+			translation: [-4, 0.4, -7],
 			shininess: 10,
 			emmissive: [0, 0, 0]
 		},
@@ -229,7 +248,7 @@ var Run = function(
 			direction: [0, 0, 0],
 			on: 1,
 			attenuation: [1.0, 0.1, 0.05],
-			shadowclip: [0.05, 50.0],
+			shadowclip: [0.05, 750.0],
 			shadowgen
 		}
 	);
@@ -244,17 +263,17 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [15, 15, 15],
-			translation: [-500, 160, -178],
+			translation: [-500 / 10, 160 / 10, -178 / 10],
 			shininess: 10,
 			emmissive: [0, 0, 0]
 		},
 		{
 			name: 'moon',
-			colour: [0.7, 0.7, 0.9],
+			colour: [0.01, 0.01, 0.03],
 			//colour: [0.7, 0.0, 0.0],
 			direction: [0, 0, 0],
 			on: 1,
-			attenuation: [1, 0.00001, 0.0001],
+			attenuation: [0, 0, 0],
 			shadowclip: [0.05, 750.0],
 			shadowgen
 		}
@@ -281,7 +300,7 @@ var Run = function(
 			direction: [0, 0, 0],
 			on: 1,
 			attenuation: [1, 0.1, 0.01],
-			shadowclip: [0.05, 50.0],
+			shadowclip: [0.05, 750.0],
 			shadowgen
 		}
 	);
@@ -360,8 +379,11 @@ var render = function() {
 	plane.draw(gl, world, view, proj, lightsJSON);
 	lantern.draw(gl, world, view, proj, lightsJSON);
 	rocks.draw(gl, world, view, proj, lightsJSON);
+	fire.draw(gl, world, view, proj, camera.getViewPosition());
 	skybox.draw(gl, world, view, proj);
 };
+
+var flicker = 0.3;
 
 var update = function(delta) {
 	// Convert all lights to correct format for opengl shader
@@ -371,10 +393,26 @@ var update = function(delta) {
 
 	// Update each light
 	lights.forEach(e => {
+		if (e.getName() == 'campfire' && flicker < 0) {
+			var c = e.getColour();
+			var r = Math.random() * 0.1 + -0.1;
+			c[0] = 0.7 + r;
+			c[1] = 0.4 + r;
+			e.setColour(c);
+			flicker = 0.5;
+
+			var p = e.getPosition();
+			r = Math.random() * 0.005 + -0.005;
+			p[1] = 0.75 + r;
+		}
 		e.update();
 		// If the light is the one currently selected to move check for keyevents
 		if (lightMove && e.name == lightMove) e.keyboard(delta, keys);
 	});
+	var r = Math.random() * 0.15 + -0.1;
+	flicker += r;
+	flicker -= 1 * delta;
+
 	var rot = tent.getRotation();
 	tent.setRotation([rot[0], rot[1], rot[2]]);
 	var rot = plane.getRotation();
@@ -386,6 +424,7 @@ var update = function(delta) {
 	lantern.update();
 	skybox.update();
 	rocks.update();
+	fire.update(delta);
 	view = camera.getCameraMat();
 	light.keyboard(delta, keys);
 };
