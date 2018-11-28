@@ -58,6 +58,8 @@ class Mesh {
 		this.rotation = mesh.rotation;
 		this.scale = mesh.scale;
 		this.translation = mesh.translation;
+		this.shininess = mesh.shininess;
+		this.emmissive = mesh.emmissive;
 
 		// Allocate memory
 		this.model = mat4.create();
@@ -77,12 +79,12 @@ class Mesh {
 		this.lightDirL = gl.getUniformLocation(program, 'lightDir');
 		this.lightPosL = gl.getUniformLocation(program, 'lightPos');
 		this.lightOnL = gl.getUniformLocation(program, 'lightOn');
-		this.attenkcL = gl.getUniformLocation(program, 'attenuation_kc');
-		this.attenklL = gl.getUniformLocation(program, 'attenuation_kl');
-		this.attenkqL = gl.getUniformLocation(program, 'attenuation_kq');
+		this.attenuationL = gl.getUniformLocation(program, 'attenuation');
 		this.textureSampler = gl.getUniformLocation(program, 'textureSampler');
 		this.normalSampler = gl.getUniformLocation(program, 'normalSampler');
 		this.shadowClipL = gl.getUniformLocation(program, 'shadowClip');
+		this.shininessL = gl.getUniformLocation(program, 'shininess');
+		this.emmissiveL = gl.getUniformLocation(program, 'emmissive');
 		gl.uniform1i(this.textureSampler, 0); // texture unit 0
 		gl.uniform1i(this.normalSampler, 1); // texture unit 1
 
@@ -95,6 +97,10 @@ class Mesh {
 		if (this.normalMap) {
 			this.normalTexture = this.createTexture(gl, this.normalMap);
 		}
+	}
+
+	setEmmissive(em) {
+		this.emmissive = em;
 	}
 
 	getRotation() {
@@ -210,7 +216,7 @@ class Mesh {
 	}
 
 	// Bind model uniforms
-	bindUniforms(gl, world, model, view, proj, lights, shadowClip) {
+	bindUniforms(gl, world, model, view, proj, lights) {
 		//Uniforms
 		gl.uniformMatrix4fv(this.projL, gl.FALSE, proj);
 		gl.uniformMatrix4fv(this.viewL, gl.FALSE, view);
@@ -218,21 +224,30 @@ class Mesh {
 		gl.uniformMatrix4fv(this.modelL, gl.FALSE, model);
 
 		gl.uniformMatrix3fv(this.nmatrixL, gl.FALSE, this.nmatrix3);
+		gl.uniform1f(this.shininessL, this.shininess);
+		gl.uniform3fv(this.emmissiveL, this.emmissive);
 
 		if (lights) {
 			gl.uniform3fv(this.lightColL, lights.c);
 			gl.uniform3fv(this.lightDirL, lights.d);
 			gl.uniform3fv(this.lightPosL, lights.p);
 			gl.uniform1iv(this.lightOnL, lights.on);
+			gl.uniform3fv(this.attenuationL, lights.a);
+			gl.uniform2fv(this.shadowClipL, lights.sc);
+
+			for (var i = 0; i < lights.sm.length; i++) {
+				if (lights.sm[i]) {
+					var shadowMapL = gl.getUniformLocation(
+						this.shader.getProgram(),
+						'shadowMap' + i
+					);
+					gl.uniform1i(shadowMapL, 2 + i);
+					gl.activeTexture(gl.TEXTURE2 + i);
+					gl.bindTexture(gl.TEXTURE_CUBE_MAP, lights.sm[i]);
+				}
+			}
 		}
 
-		if (shadowClip) {
-			gl.uniform2fv(this.shadowClipL, shadowClip);
-		}
-
-		gl.uniform1f(this.attenkcL, 1.0);
-		gl.uniform1f(this.attenklL, 0.1);
-		gl.uniform1f(this.attenkqL, 0.01);
 		gl = null;
 		world = null;
 		view = null;
@@ -271,7 +286,7 @@ class Mesh {
 		gl = null;
 	}
 
-	draw(gl, world, view, proj, lights, shadowMaps, shadowClip) {
+	draw(gl, world, view, proj, lights, shadowClip) {
 		// Use shader
 		gl.useProgram(this.shader.getProgram());
 
@@ -283,18 +298,6 @@ class Mesh {
 		gl.activeTexture(gl.TEXTURE1);
 		if (this.normalTexture) {
 			gl.bindTexture(gl.TEXTURE_2D, this.normalTexture);
-		}
-
-		if (shadowMaps) {
-			for (var i = 0; i < shadowMaps.length; i++) {
-				var shadowMapL = gl.getUniformLocation(
-					this.shader.getProgram(),
-					'shadowMap' + i
-				);
-				gl.uniform1i(shadowMapL, 2 + i);
-				gl.activeTexture(gl.TEXTURE2 + i);
-				gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMaps[i]);
-			}
 		}
 
 		// Calculate normal matrix
