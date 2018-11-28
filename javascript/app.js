@@ -41,8 +41,8 @@ var Init = function() {
 		'models/plane.json',
 		'textures/Rock/Rock_025_NORM.jpg',
 		'textures/texture4.png',
-		'textures/Stone Wall/Stone_Wall_009_COLOR.jpg',
-		'textures/Stone Wall/Stone_Wall_009_NORM.jpg',
+		'textures/Stone Floor/Stone_Floor_002_COLOR.jpg',
+		'textures/Stone Floor/Stone_Floor_002_NORM.jpg',
 		'shaders/shadow.vert',
 		'shaders/shadow.frag',
 		'shaders/shadowmapgen.vert',
@@ -127,8 +127,8 @@ var Run = function(
 	planejson,
 	rockNormal,
 	white,
-	stoneWallTexture,
-	stoneWallNormal,
+	stoneFloorTexture,
+	stoneFloorNormal,
 	shadowshader,
 	skyboxTextures,
 	skyboxshader
@@ -137,9 +137,9 @@ var Run = function(
 
 	plane = new Mesh({
 		gl,
-		texture: stoneWallTexture,
+		texture: stoneFloorTexture,
 		texturescale: 10,
-		normalmap: stoneWallNormal,
+		normalmap: stoneFloorNormal,
 		mesh: planejson.meshes[0],
 		shader: shadowshader,
 		rotation: [0, 0, 0],
@@ -179,7 +179,7 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [0.5, 0.5, 0.5],
-			translation: [-3, 1, 5]
+			translation: [-3, 20, 5]
 		},
 		{
 			name: 'sun',
@@ -199,8 +199,8 @@ var Run = function(
 			mesh: spherejson.meshes[0],
 			shader: lightshader,
 			rotation: [0, 0, 0],
-			scale: [0.5, 0.5, 0.5],
-			translation: [3, 1, 5]
+			scale: [15, 15, 15],
+			translation: [-500, 160, -178]
 		},
 		{
 			name: 'sun',
