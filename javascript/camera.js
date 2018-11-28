@@ -22,6 +22,10 @@ class Camera {
 		this.rotMat = mat4.create();
 	}
 
+	getViewPosition() {
+		return this.viewPos;
+	}
+
 	setLookAt(look) {
 		this.viewLook = look;
 	}
