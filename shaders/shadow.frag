@@ -53,7 +53,7 @@ void main()
 			vec4 lightPosH = fWorld * vec4(lightPos[i], 1.0);
 			vec4 lightDistVec = lightPosH - fPositionShadow;
 			float lightDist = (length(lightDistVec) - shadowClip[i].x) / (shadowClip[i].y - shadowClip[i].x);
-			vec3 lightDistVecN = normalize(lightDistVec).xyz;
+			vec3 lightDistVecN = normalize(lightDistVec.xyz);
 			float shadowMapValue = 0.0;
 			if(i == 0){
 				shadowMapValue = getShadowMapValue(lightDistVecN, shadowMap0);
@@ -77,18 +77,20 @@ void main()
 			float distanceToLight = length(lightViewPos.xyz - fPosition.xyz);
 
 			// Light Attenuation
-			float attenuation = getAttenuation(distanceToLight, attenuation[i]);
+			float att = getAttenuation(distanceToLight, attenuation[i]);
 			//float attenuation = 2.0;
-
-			if(shadowMapValue + 0.001 >= lightDist){
-				totalDiffuse += mix(totalDiffuse, attenuation * diffuse, 1.0);
-				totalSpec += mix(totalDiffuse, attenuation * specular, 1.0);
+			if(attenuation[i].x == 0.0){
+				att = 1.0;
 			}
-			float ambientFactor = 0.5 * attenuation;
+
+			if(shadowMapValue + 0.00001 >= lightDist){
+				totalDiffuse += mix(totalDiffuse, att * diffuse, 1.0);
+				totalSpec += mix(totalDiffuse, att * specular, 1.0);
+			}
+			float ambientFactor = 0.5 * att;
 			totalAmbient += mix(totalAmbient, diffuse_colour * vec4(lightCol[i], 1.0) * vec4(ambientFactor, ambientFactor, ambientFactor, 1.0), 1.0);
 		}
 	}
-
 	gl_FragColor = totalAmbient + totalDiffuse + totalSpec + vec4(emmissive, 1.0);
 	//gl_FragColor = vec4(totalDiffuse.xyz, 1.0);
 	//gl_FragColor = vec4(totalSpec.xyz, 1.0);
