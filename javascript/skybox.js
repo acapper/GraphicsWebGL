@@ -40,7 +40,8 @@ class Skybox {
 					shader: skybox.shader,
 					rotation: facesRot[i],
 					scale: [s + 1, s + 1, s + 1],
-					translation: faces[i]
+					translation: faces[i],
+					emmissive: [0, 0, 0]
 				})
 			);
 		}
