@@ -94,9 +94,15 @@ class Light extends Mesh {
 		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-		gl.getExtension('OES_texture_float');
-		gl.getExtension('OES_texture_float_linear');
+		// Increase size of colours in image
+		var float = gl.getExtension('OES_texture_float');
+		var floatlinear = gl.getExtension('OES_texture_float_linear');
 
+		// If extensions are found use gl.Float or use default unsigned byte
+		var bitSize = gl.UNSIGNED_BYTE;
+		if (float && floatlinear) bitSize = gl.FLOAT;
+
+		// Create cube map
 		for (var i = 0; i < 6; i++) {
 			gl.texImage2D(
 				gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -106,14 +112,16 @@ class Light extends Mesh {
 				2048,
 				0,
 				gl.RGBA,
-				gl.FLOAT,
+				bitSize,
 				null
 			);
 		}
 
+		// Create framebuffer
 		this.shadowMapFrameBuffer = gl.createFramebuffer();
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowMapFrameBuffer);
 
+		// Create renderbuffer with depth
 		this.shadowMapRenderBuffer = gl.createRenderbuffer();
 		gl.bindRenderbuffer(gl.RENDERBUFFER, this.shadowMapRenderBuffer);
 		gl.renderbufferStorage(
@@ -123,11 +131,15 @@ class Light extends Mesh {
 			2048
 		);
 
+		// Unbind
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+
+		// Create view matrixes for light source
 		this.createShadowCameras();
 
+		// Create projection matrix for cameras
 		this.shadowMapProj = mat4.create();
 		mat4.perspective(
 			this.shadowMapProj,
@@ -184,6 +196,7 @@ class Light extends Mesh {
 		}
 	}
 
+	// Create six view matrixes for light one in each direction eg. up down left right forward back
 	createShadowCameras() {
 		this.shadowMapCameras = [
 			//Positive X
@@ -250,16 +263,25 @@ class Light extends Mesh {
 	}
 
 	genShadowMap(models, world) {
+		// Make sure light views are upto date
 		this.createShadowCameras();
+
+		// Bind shadow gen shader
 		gl.useProgram(this.shadowgen.getProgram());
+
+		// Bind the cube map
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.shadowMapCube);
+
+		// Bind buffers for drawing
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowMapFrameBuffer);
 		gl.bindRenderbuffer(gl.RENDERBUFFER, this.shadowMapRenderBuffer);
 
+		// Set viewport width and height to cube size
 		gl.viewport(0, 0, 2048, 2048);
 		gl.enable(gl.DEPTH_TEST);
 		gl.enable(gl.CULL_FACE);
 
+		// Bind uniforms
 		var shadowClipL = gl.getUniformLocation(
 			this.shadowgen.getProgram(),
 			'shadowClip'
@@ -275,7 +297,9 @@ class Light extends Mesh {
 		var projL = gl.getUniformLocation(this.shadowgen.getProgram(), 'proj');
 		gl.uniformMatrix4fv(projL, gl.FALSE, this.shadowMapProj);
 
+		// For each light view
 		for (var i = 0; i < this.shadowMapCameras.length; i++) {
+			// Bind view
 			var viewL = gl.getUniformLocation(
 				this.shadowgen.getProgram(),
 				'view'
@@ -286,6 +310,7 @@ class Light extends Mesh {
 				this.shadowMapCameras[i].getCameraMat()
 			);
 
+			// Bind framebuffer output
 			gl.framebufferTexture2D(
 				gl.FRAMEBUFFER,
 				gl.COLOR_ATTACHMENT0,
@@ -294,6 +319,7 @@ class Light extends Mesh {
 				0
 			);
 
+			// Bind framebuffer depth buffer
 			gl.framebufferRenderbuffer(
 				gl.FRAMEBUFFER,
 				gl.DEPTH_ATTACHMENT,
@@ -301,14 +327,17 @@ class Light extends Mesh {
 				this.shadowMapRenderBuffer
 			);
 
+			// Clear frame buffer
 			gl.clearColor(1, 1, 1, 1);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+			// Draw meshes
 			for (var j = 0; j < models.length; j++) {
 				models[j].shadowGen(gl, world, this.shadowgen.getProgram());
 			}
 		}
 
+		// Unbind
 		gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		gl.bindRenderbuffer(gl.RENDERBUFFER, null);

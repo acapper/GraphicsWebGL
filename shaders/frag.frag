@@ -28,6 +28,7 @@ void main()
 {
 	float shininess = 1.0;		
 	vec4 texel = texture2D(textureSampler, fTexture);
+	// Convert normal values
 	vec3 normal = normalize(texture2D(normalSampler, fTexture).xyz*2.0 - 1.0);
 	vec4 diffuse_colour = vec4(texel.rgba);
 

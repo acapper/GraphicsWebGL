@@ -17,6 +17,7 @@ const float maxDistance = 10.0;
 
 void main()
 {
+	// Set point size based on distance
     float cameraDist = distance(position.xyz, cameraPosition);
     gl_PointSize = position.w * (pointScale / cameraDist) / (position.y + 1.0);
 

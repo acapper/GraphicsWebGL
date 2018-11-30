@@ -1,15 +1,15 @@
 class Point {
 	constructor(point) {
 		this.position = point.position;
-		this.init(point.maxheight);
+		this.maxHeight =
+			point.maxheight +
+			Math.random() * point.maxheight * 1.5 +
+			-point.maxheight;
+		this.speed = point.maxheight + Math.random() * 4 + 1;
+		this.centerSpeed = point.maxheight + Math.random() * 2 - 2;
 	}
 
-	init(height) {
-		this.maxHeight = height + Math.random() * height * 1.5 + -height;
-		this.speed = height + Math.random() * 4 + 1;
-		this.centerSpeed = height + Math.random() * 2 - 2;
-	}
-
+	// Getters
 	getPosition() {
 		return this.position;
 	}
@@ -26,14 +26,8 @@ class Point {
 		return this.maxHeight;
 	}
 
+	// Setters
 	setPosition(pos) {
 		this.position = pos;
-	}
-
-	update() {
-		this.position[1] += 0.1 * Math.sqrt(Math.random());
-		if (this.position[1] > 1.5) {
-			this.position[1] = 0;
-		}
 	}
 }

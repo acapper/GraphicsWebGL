@@ -25,7 +25,7 @@ var genTrees = function(
 				gl,
 				texture: [bark, leaves],
 				texturescale: 1,
-				normalmap: null,
+				normalmap: [null],
 				meshes: json.meshes,
 				shader: shader,
 				rotation: [0, 125, 0],

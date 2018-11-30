@@ -74,6 +74,7 @@ var loadAll = function(names) {
 			// If image load as image
 			case 'jpg':
 			case 'png':
+			case 'bmp':
 				proms.push(loadImage(element));
 				break;
 			// If json load as json

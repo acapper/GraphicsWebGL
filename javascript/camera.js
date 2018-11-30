@@ -43,7 +43,7 @@ class Camera {
 		return forward;
 	}
 
-	// Translate camera lookat and position
+	// Translate camera lookat and position in the direction it is facing
 	forward(speed) {
 		var forward = vec3.create();
 		vec3.sub(forward, this.viewLook, this.viewPos);
@@ -53,6 +53,7 @@ class Camera {
 		vec3.add(this.viewLook, forward, this.viewLook);
 	}
 
+	// Translate camera lookat and position in the perpendicular side direction it is facing
 	sideways(speed) {
 		var forward = vec3.create();
 		vec3.sub(forward, this.viewLook, this.viewPos);
@@ -63,37 +64,10 @@ class Camera {
 		vec3.add(this.viewLook, forward, this.viewLook);
 	}
 
+	// Translate camera lookat and position in the perpendicular up direction it is facing
 	up(speed) {
 		vec3.add(this.viewPos, [0, speed, 0], this.viewPos);
 		vec3.add(this.viewLook, [0, speed, 0], this.viewLook);
-	}
-
-	// 3d rotate camera position [xaxisangle, yaxisangle, zaxisangle]
-	rotateViewPos(rot) {
-		// Convert position to homogeneous coordinates
-		var viewPosH = [
-			this.viewPos[0] - this.viewLook[0],
-			this.viewPos[1] - this.viewLook[1],
-			this.viewPos[2] - this.viewLook[2],
-			1
-		];
-		// Create rotation matrix
-		this.rotMat = this.rotateMat(
-			this.rotMat,
-			glMatrix.toRadian(rot[0]),
-			glMatrix.toRadian(rot[1]),
-			glMatrix.toRadian(rot[2])
-		);
-		// Transform homogeneous position
-		vec4.transformMat4(viewPosH, viewPosH, this.rotMat);
-		// Covert position to vec3
-		this.viewPos = [
-			viewPosH[0] + this.viewLook[0],
-			viewPosH[1] + this.viewLook[1],
-			viewPosH[2] + this.viewLook[2]
-		];
-		viewPosH = null;
-		rot = null;
 	}
 
 	// 3d rotate camera lokkat [xaxisangle, yaxisangle, zaxisangle]
@@ -124,10 +98,14 @@ class Camera {
 		rot = null;
 	}
 
+	// Rotate camera lookat around perpendicular side direction camera is facing
 	rotateLookAtVertical(rot) {
+		// Get forward vector
 		var forward = vec3.create();
 		vec3.sub(forward, this.viewLook, this.viewPos);
 		vec3.normalize(forward, forward);
+
+		// Get side vector
 		var side = vec3.create();
 		vec3.cross(side, forward, this.viewUp);
 

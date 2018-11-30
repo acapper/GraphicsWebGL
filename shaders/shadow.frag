@@ -38,6 +38,7 @@ void main()
 {					
 
 	vec4 texel = texture2D(textureSampler, fTexture);
+	// Convert normal values
 	vec3 normal = normalize(texture2D(normalSampler, fTexture).xyz*2.0 - 1.0);
 	vec4 diffuse_colour = vec4(texel.rgba);
 	if(texel.a == 0.0) discard;
@@ -56,6 +57,8 @@ void main()
 			float lightDist = (length(lightDistVec) - shadowClip[i].x) / (shadowClip[i].y - shadowClip[i].x);
 			vec3 lightDistVecN = normalize(lightDistVec.xyz);
 			float shadowMapValue = 0.0;
+
+			// Get shadow map value for current light
 			if(i == 0){
 				shadowMapValue = getShadowMapValue(lightDistVecN, shadowMap0);
 			}else if(i == 1){
@@ -65,13 +68,15 @@ void main()
 			}
 
 			// Light Diffuse
-			vec3 N = normalize(normal);																// Be careful with the order of multiplication!
+			vec3 N = normalize(normal);	
+			// Convert to tangent space															// Be careful with the order of multiplication!
 			vec3 L = normalize(fTangSpace * (lightViewPos.xyz - fPosition.xyz));		// Ensure light_dir is unit length
 			float intensity = max(dot(L, N), 0.0);
 			vec4 diffuse = (intensity * vec4(lightCol[i], 1.0)) + intensity * diffuse_colour;
 
 			// Light Specular
 			vec4 specular_colour = vec4(lightCol[i], 1.0);						// smaller values give sharper specular responses, larger more spread out
+			// Convert to tangent space			
 			vec3 V = normalize(fTangSpace * -fPosition.xyz);  			// Viewing vector is reverse of vertex position in eye space
 			vec3 R = reflect(-L, N);												// Calculate the reflected beam, N defines the plane (see diagram on labsheet)
 			vec4 specular = pow(max(dot(R, V), 0.0), shininess) * specular_colour;	// Calculate specular component
@@ -79,15 +84,20 @@ void main()
 
 			// Light Attenuation
 			float att = getAttenuation(distanceToLight, attenuation[i]);
-			//float attenuation = 2.0;
+			
+			// If light attenuation params are 0 set attenuation to 1
 			if(attenuation[i].x == 0.0){
 				att = 1.0;
 			}
 
+			// Apply shadow map bias
 			if(shadowMapValue + 0.00001 >= lightDist){
+				// Not in shadow
 				totalDiffuse += mix(totalDiffuse, att * diffuse, 1.0);
 				totalSpec += mix(totalDiffuse, att * specular, 1.0);
 			}
+
+			// In shadow and out
 			float ambientFactor = 0.5 * att;
 			totalAmbient += mix(totalAmbient, diffuse_colour * vec4(lightCol[i], 1.0) * vec4(ambientFactor, ambientFactor, ambientFactor, 1.0), 1.0);
 		}

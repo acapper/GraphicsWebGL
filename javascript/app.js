@@ -24,6 +24,11 @@ var shadowgen;
 
 // Initialise resources needed for opengl scene
 var Init = function() {
+	// http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html
+	Math.seedrandom('any string you like');
+
+	fpsElem.textContent = 'Loading 👍';
+
 	// Load external resources
 	var proms = loadAll([
 		'textures/Rock/Rock_025_COLOR.jpg',
@@ -60,15 +65,37 @@ var Init = function() {
 		'textures/fire.png',
 		'models/tree.json',
 		'textures/tree/bark.jpg',
-		'textures/tree/branch.png'
+		'textures/tree/branch.png',
+		'models/chair.json',
+		'models/firepit.json',
+		'textures/firepit/Fire_Pit_Texture.png',
+		'textures/firepit/Normal_Mapping.bmp',
+		'models/log.json',
+		'textures/log/Log_pine_color_32bpc_4k.png',
+		'textures/log/Log_pine_normal_32bpc_4k.png',
+		'textures/metal/Metal_004_Base_Color.png',
+		'textures/metal/Metal_004_Normal.png',
+		'textures/fabric/Fabric_001_COLOR.jpg',
+		'textures/fabric/Fabric_001_NORM.jpg',
+		'textures/plastic/Plastic_001_COLOR.jpg',
+		'textures/nonormal.png'
 	]);
 
 	// Wait for external resources to load
 	Promise.all(proms)
 		// External resources have loaded
 		.then(promsR => {
+			proms = null;
 			// Get webgl package
 			gl = canvas.getContext('webgl');
+
+			var float = gl.getExtension('OES_texture_float');
+			var floatlinear = gl.getExtension('OES_texture_float_linear');
+			if (!float && !floatlinear) {
+				alert(
+					'Your computer is incomptible with OES_texture_float or OES_texture_float_linear so you are running in low quailty mode'
+				);
+			}
 
 			// If cant get standard webgl package use experimental
 			if (!gl) {
@@ -84,9 +111,9 @@ var Init = function() {
 			gl.clearColor(0, 0, 0, 1);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			gl.enable(gl.DEPTH_TEST);
-			//gl.enable(gl.CULL_FACE);
-			//gl.frontFace(gl.CCW);
-			//gl.cullFace(gl.BACK);
+			gl.enable(gl.CULL_FACE);
+			gl.frontFace(gl.CCW);
+			gl.cullFace(gl.BACK);
 
 			// Load and create shaders
 			var shader = new Shader(gl, promsR[1], promsR[2]);
@@ -109,6 +136,7 @@ var Init = function() {
 			);
 
 			// Run gl scene
+			// This is a mess figure out how to make it better
 			Run(
 				promsR[0],
 				shader,
@@ -137,11 +165,25 @@ var Init = function() {
 				promsR[27],
 				promsR[28],
 				fireShader,
-				promsR[31]
+				promsR[31],
+				promsR[35],
+				promsR[36],
+				promsR[37],
+				promsR[38],
+				promsR[39],
+				promsR[40],
+				promsR[41],
+				promsR[42],
+				promsR[43],
+				promsR[44],
+				promsR[45],
+				promsR[46],
+				promsR[47]
 			);
 		})
 		// Catch any errors once the external resources have loaded
 		.catch(err => {
+			fpsElem.textContent = 'Error 😥';
 			throw err;
 		});
 };
@@ -168,11 +210,25 @@ var Run = function(
 	lanternNormal,
 	rocksjson,
 	fireShader,
-	fireTexture
+	fireTexture,
+	chairjson,
+	firepitjson,
+	firepittexture,
+	firepitnormal,
+	logjson,
+	logtexture,
+	lognormal,
+	metaltexture,
+	metalnormal,
+	fabrictexture,
+	fabricnormal,
+	plasticTexture,
+	noNormal
 ) {
 	var s = 20 * 100;
 	s;
 
+	// Scene Object creation
 	plane = new Mesh({
 		gl,
 		texture: grassTexture,
@@ -191,7 +247,7 @@ var Run = function(
 		gl,
 		texture: fireTexture,
 		shader: fireShader,
-		center: [5, 0, -2],
+		center: [5, 0, 4],
 		maxpoints: 256,
 		radius: 1,
 		maxheight: 2.5
@@ -211,6 +267,34 @@ var Run = function(
 		emmissive: [0, 0, 0]
 	});
 
+	log = new Mesh({
+		gl,
+		texture: logtexture,
+		texturescale: 1,
+		normalmap: lognormal,
+		mesh: logjson.meshes[0],
+		shader: shadowshader,
+		rotation: [85, -5, 130],
+		scale: [0.1, 0.1, 0.1],
+		translation: [3, 0.17, 8.5],
+		shininess: 10000,
+		emmissive: [0, 0, 0]
+	});
+
+	log2 = new Mesh({
+		gl,
+		texture: logtexture,
+		texturescale: 1,
+		normalmap: lognormal,
+		mesh: logjson.meshes[0],
+		shader: shadowshader,
+		rotation: [85, -5, 85],
+		scale: [0.1, 0.1, 0.1],
+		translation: [8, 0.17, 8.6],
+		shininess: 10000,
+		emmissive: [0, 0, 0]
+	});
+
 	rocks = new Mesh({
 		gl,
 		texture: rockTexture,
@@ -220,7 +304,21 @@ var Run = function(
 		shader: shadowshader,
 		rotation: [0, 0, 0],
 		scale: [0.15, 0.2, 0.15],
-		translation: [5, 0, -2],
+		translation: [5, 0, 4],
+		shininess: 10000,
+		emmissive: [0, 0, 0]
+	});
+
+	firepit = new Mesh({
+		gl,
+		texture: firepittexture,
+		texturescale: 1,
+		normalmap: firepitnormal,
+		mesh: firepitjson.meshes[0],
+		shader: shadowshader,
+		rotation: [-90, 0, 0],
+		scale: [0.7, 0.5, 0.7],
+		translation: [5, 0, 4],
 		shininess: 10000,
 		emmissive: [0, 0, 0]
 	});
@@ -229,13 +327,85 @@ var Run = function(
 		gl,
 		texture: [lanternTexture],
 		texturescale: 1,
-		normalmap: lanternNormal,
+		normalmap: [lanternNormal],
 		meshes: lanternjson.meshes,
 		shader: shadowshader,
 		rotation: [0, 125, 0],
 		scale: [0.01, 0.01, 0.01],
 		translation: [-4, 0, -7],
 		shininess: 10,
+		emmissive: [0, 0, 0]
+	});
+
+	chair = new Model({
+		gl,
+		texture: [
+			fabrictexture,
+			plasticTexture,
+			metaltexture,
+			metaltexture,
+			plasticTexture,
+			plasticTexture,
+			plasticTexture,
+			metaltexture,
+			metaltexture,
+			fabrictexture
+		],
+		texturescale: 1,
+		normalmap: [
+			fabricnormal,
+			noNormal,
+			metalnormal,
+			metalnormal,
+			noNormal,
+			noNormal,
+			noNormal,
+			metalnormal,
+			metalnormal,
+			fabricnormal
+		],
+		meshes: chairjson.meshes,
+		shader: shadowshader,
+		rotation: [0, 125, 0],
+		scale: [0.2, 0.2, 0.2],
+		translation: [-2, 0, -9],
+		shininess: 10,
+		emmissive: [0, 0, 0]
+	});
+
+	chair2 = new Model({
+		gl,
+		texture: [
+			fabrictexture,
+			plasticTexture,
+			metaltexture,
+			metaltexture,
+			plasticTexture,
+			plasticTexture,
+			plasticTexture,
+			metaltexture,
+			metaltexture,
+			fabrictexture
+		],
+		texturescale: 1,
+		normalmap: [
+			fabricnormal,
+			noNormal,
+			metalnormal,
+			metalnormal,
+			noNormal,
+			noNormal,
+			noNormal,
+			metalnormal,
+			metalnormal,
+			fabricnormal
+		],
+		meshes: chairjson.meshes,
+		shader: shadowshader,
+		rotation: [0, 80, 0],
+		scale: [0.2, 0.2, 0.2],
+		translation: [2, 0, -10],
+		shininess: 1,
 		emmissive: [0, 0, 0]
 	});
 
@@ -278,7 +448,7 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [15, 15, 15],
-			translation: [-500 / 10, 160 / 10, -178 / 10],
+			translation: [-500 / 2, 160 / 2, -178 / 2],
 			shininess: 10,
 			emmissive: [0, 0, 0]
 		},
@@ -304,7 +474,7 @@ var Run = function(
 			shader: lightshader,
 			rotation: [0, 0, 0],
 			scale: [1, 1, 1],
-			translation: [5, 0.75, -2],
+			translation: [5, 0.75, 4],
 			shininess: 10,
 			emmissive: [0, 0, 0]
 		},
@@ -332,10 +502,10 @@ var Run = function(
 
 	// Create world, view and project matrix
 	mat4.identity(world);
-	var pos = [5.7, 1.3, 1.1];
+	var pos = [10, 1.5, 1];
 	camera = new Camera({
 		viewPos: pos,
-		viewLook: vec3.add(vec3.create(), pos, [-1, 0, -1]),
+		viewLook: vec3.add(vec3.create(), pos, [-1, 0, 0]),
 		viewUp: [0, 1, 0]
 	});
 	view = camera.getCameraMat();
@@ -347,9 +517,41 @@ var Run = function(
 		10000.0
 	);
 
+	// Get meshes to make shadows for
+	var lm = lantern.getMeshes();
+	var ch = chair.getMeshes();
+	var ch2 = chair2.getMeshes();
+	shadowmeshes = [tent, plane, rocks, log, log2];
+
+	lm.forEach(e => {
+		shadowmeshes.push(e);
+	});
+	ch.forEach(e => {
+		shadowmeshes.push(e);
+	});
+	ch2.forEach(e => {
+		shadowmeshes.push(e);
+	});
+	trees.forEach(e => {
+		e.getMeshes().forEach(m => {
+			shadowmeshes.push(m);
+		});
+	});
+
+	// Get light last position
+	lastlightpos = light.getPosition();
+	lastlightpos2 = light2.getPosition();
+	lastlightpos3 = light3.getPosition();
+
 	// Start draw loop
 	requestAnimationFrame(draw);
 };
+
+var lastlightpos;
+var lastlightpos2;
+var lastlightpos3;
+
+var frame = 1;
 
 // Web gl main draw loop
 var then = 0; // Keep track of last frame time
@@ -360,16 +562,23 @@ var draw = function(now) {
 	const fps = 1 / deltaTime; // compute frames per second
 	fpsElem.textContent = fps.toFixed(1); // update fps display
 
-	var lm = lantern.getMeshes();
-	var shadowmeshes = [tent, lm[1], lm[2], lm[3], lm[4], lm[5], plane, rocks];
-
-	light.genShadowMap(shadowmeshes, world);
-	light2.genShadowMap(shadowmeshes, world);
-	light3.genShadowMap(shadowmeshes, world);
-	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
 	// Update loop
 	update(deltaTime);
+
+	// Shadows
+	// If its the first frame gen shadows
+	// If light has moved gen shadows
+	// I know that this wont work if other things move but I dont have anything else that moves
+	if (frame == 1 || lastlightpos != light.getPosition())
+		light.genShadowMap(shadowmeshes, world);
+	if (frame == 1 || lastlightpos2 != light2.getPosition())
+		light2.genShadowMap(shadowmeshes, world);
+	if (frame == 1 || lastlightpos3 != light3.getPosition())
+		light3.genShadowMap(shadowmeshes, world);
+	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+	if (frame == 1) frame = 0;
+
 	// Render loop
 	render();
 	// Get next frame
@@ -386,6 +595,7 @@ var render = function() {
 	world = mat4FromRotTransScale(world, [0, 0, 0], [0, 0, 0], [1, 1, 1]);
 
 	// TODO improve so that each light has property draw/notdraw
+	// Debug draw lights
 	/*lights.forEach(e => {
 		if (e.getName() == 'campfire')
 			e.draw(gl, world, view, proj, lightsJSON);
@@ -399,6 +609,11 @@ var render = function() {
 	trees.forEach(e => {
 		e.draw(gl, world, view, proj, lightsJSON);
 	});
+	chair.draw(gl, world, view, proj, lightsJSON);
+	chair2.draw(gl, world, view, proj, lightsJSON);
+	firepit.draw(gl, world, view, proj, lightsJSON);
+	log.draw(gl, world, view, proj, lightsJSON);
+	log2.draw(gl, world, view, proj, lightsJSON);
 	fire.draw(gl, world, view, proj, camera.getViewPosition());
 	skybox.draw(gl, world, view, proj);
 };
@@ -413,7 +628,9 @@ var update = function(delta) {
 
 	// Update each light
 	lights.forEach(e => {
+		// If the current light is the campfire and flicker is greater than 0
 		if (e.getName() == 'campfire' && flicker < 0) {
+			// Move the light and change the colour a little
 			var c = e.getColour();
 			var r = Math.random() * 0.15 + -0.15;
 			c[0] = 0.7 + r;
@@ -422,21 +639,18 @@ var update = function(delta) {
 			flicker = 0.5;
 
 			var p = e.getPosition();
-			r = Math.random() * 0.005 + -0.005;
+			r = Math.random() * -0.02;
 			p[1] = 0.75 + r;
 		}
 		e.update();
 		// If the light is the one currently selected to move check for keyevents
 		if (lightMove && e.name == lightMove) e.keyboard(delta, keys);
 	});
+
+	// Decrease flicker count down
 	var r = Math.random() * 0.15 + -0.1;
 	flicker += r;
 	flicker -= 1 * delta;
-
-	var rot = tent.getRotation();
-	tent.setRotation([rot[0], rot[1], rot[2]]);
-	var rot = plane.getRotation();
-	plane.setRotation([rot[0], rot[1], rot[2]]);
 
 	// TODO update model method to allow for static models to avoid unneeded updates
 	plane.update();
@@ -447,6 +661,11 @@ var update = function(delta) {
 	trees.forEach(e => {
 		e.update();
 	});
+	chair.update();
+	chair2.update();
+	firepit.update();
+	log.update();
+	log2.update();
 	fire.update(delta);
 	view = camera.getCameraMat();
 	light.keyboard(delta, keys);
@@ -484,6 +703,7 @@ var getLightJSON = function() {
 };
 
 var keyboard = function(delta) {
+	// Move camera
 	if (keys['W'.charCodeAt(0)]) {
 		camera.forward(1 * delta * 5);
 	}

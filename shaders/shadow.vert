@@ -27,6 +27,7 @@ void main()
 	vec3 tang = normalize((view * world * model * vec4(tangent, 0.0)).xyz);
 	vec3 bitang = normalize(cross(norm, tang));
 
+	// Calc tangent space matrix
 	fTangSpace = mat3 (
 		tang.x, bitang.x, norm.x,
 		tang.y, bitang.y, norm.y,
