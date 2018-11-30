@@ -57,7 +57,10 @@ var Init = function() {
 		'models/rocks.json',
 		'shaders/fire.vert',
 		'shaders/fire.frag',
-		'textures/fire.png'
+		'textures/fire.png',
+		'models/tree.json',
+		'textures/tree/bark.jpg',
+		'textures/tree/branch.png'
 	]);
 
 	// Wait for external resources to load
@@ -92,6 +95,18 @@ var Init = function() {
 			shadowgen = new Shader(gl, promsR[12], promsR[13]);
 			var skyboxshader = new Shader(gl, promsR[20], promsR[21]);
 			var fireShader = new Shader(gl, promsR[29], promsR[30]);
+
+			trees = genTrees(
+				20,
+				50,
+				125,
+				promsR[32],
+				promsR[33],
+				promsR[34],
+				shadowshader,
+				2,
+				5
+			);
 
 			// Run gl scene
 			Run(
@@ -161,7 +176,7 @@ var Run = function(
 	plane = new Mesh({
 		gl,
 		texture: grassTexture,
-		texturescale: s / 4,
+		texturescale: s / 1,
 		normalmap: grassNormal,
 		mesh: planejson.meshes[0],
 		shader: shadowshader,
@@ -177,9 +192,9 @@ var Run = function(
 		texture: fireTexture,
 		shader: fireShader,
 		center: [5, 0, -2],
-		maxpoints: 500,
+		maxpoints: 256,
 		radius: 1,
-		maxheight: 2
+		maxheight: 2.5
 	});
 
 	tent = new Mesh({
@@ -212,7 +227,7 @@ var Run = function(
 
 	lantern = new Model({
 		gl,
-		texture: lanternTexture,
+		texture: [lanternTexture],
 		texturescale: 1,
 		normalmap: lanternNormal,
 		meshes: lanternjson.meshes,
@@ -269,7 +284,7 @@ var Run = function(
 		},
 		{
 			name: 'moon',
-			colour: [0.01, 0.01, 0.03],
+			colour: [0.0001, 0.0001, 0.0003],
 			//colour: [0.7, 0.0, 0.0],
 			direction: [0, 0, 0],
 			on: 1,
@@ -311,15 +326,16 @@ var Run = function(
 		gl,
 		textures: skyboxTextures,
 		mesh: planejson.meshes[0],
-		shader: skyboxshader
+		shader: skyboxshader,
+		scale: 500
 	});
 
 	// Create world, view and project matrix
 	mat4.identity(world);
-	var pos = [6, 5, 8];
+	var pos = [5.7, 1.3, 1.1];
 	camera = new Camera({
 		viewPos: pos,
-		viewLook: vec3.add(vec3.create(), pos, [-1, -1, -1]),
+		viewLook: vec3.add(vec3.create(), pos, [-1, 0, -1]),
 		viewUp: [0, 1, 0]
 	});
 	view = camera.getCameraMat();
@@ -346,6 +362,7 @@ var draw = function(now) {
 
 	var lm = lantern.getMeshes();
 	var shadowmeshes = [tent, lm[1], lm[2], lm[3], lm[4], lm[5], plane, rocks];
+
 	light.genShadowMap(shadowmeshes, world);
 	light2.genShadowMap(shadowmeshes, world);
 	light3.genShadowMap(shadowmeshes, world);
@@ -379,6 +396,9 @@ var render = function() {
 	plane.draw(gl, world, view, proj, lightsJSON);
 	lantern.draw(gl, world, view, proj, lightsJSON);
 	rocks.draw(gl, world, view, proj, lightsJSON);
+	trees.forEach(e => {
+		e.draw(gl, world, view, proj, lightsJSON);
+	});
 	fire.draw(gl, world, view, proj, camera.getViewPosition());
 	skybox.draw(gl, world, view, proj);
 };
@@ -395,7 +415,7 @@ var update = function(delta) {
 	lights.forEach(e => {
 		if (e.getName() == 'campfire' && flicker < 0) {
 			var c = e.getColour();
-			var r = Math.random() * 0.1 + -0.1;
+			var r = Math.random() * 0.15 + -0.15;
 			c[0] = 0.7 + r;
 			c[1] = 0.4 + r;
 			e.setColour(c);
@@ -424,6 +444,9 @@ var update = function(delta) {
 	lantern.update();
 	skybox.update();
 	rocks.update();
+	trees.forEach(e => {
+		e.update();
+	});
 	fire.update(delta);
 	view = camera.getCameraMat();
 	light.keyboard(delta, keys);
