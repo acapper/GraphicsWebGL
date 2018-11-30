@@ -2,7 +2,7 @@ class Skybox {
 	constructor(skybox) {
 		var gl = skybox.gl;
 
-		var s = 500;
+		var s = skybox.scale;
 		this.cube = [];
 
 		/*'textures/FullMoon/FullMoonRight2048.png',
