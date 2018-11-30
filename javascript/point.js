@@ -5,9 +5,9 @@ class Point {
 	}
 
 	init(height) {
-		this.maxHeight = height + Math.random() * 1.5 + -1;
+		this.maxHeight = height + Math.random() * height * 1.5 + -height;
 		this.speed = height + Math.random() * 4 + 1;
-		this.centerSpeed = height + Math.random() * 0.75 + 0.25;
+		this.centerSpeed = height + Math.random() * 2 - 2;
 	}
 
 	getPosition() {
