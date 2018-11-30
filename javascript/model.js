@@ -5,7 +5,7 @@ class Model {
 			this.meshes.push(
 				new Mesh({
 					gl: model.gl,
-					texture: model.texture,
+					texture: model.texture[i],
 					texturescale: model.texturescale,
 					normalmap: model.normalmap,
 					mesh: model.meshes[i],
