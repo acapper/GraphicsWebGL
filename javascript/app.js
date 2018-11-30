@@ -649,7 +649,7 @@ var update = function(delta) {
 
 	// Decrease flicker count down
 	var r = Math.random() * 0.15 + -0.1;
-	flicker += r;
+	flicker += r * delta;
 	flicker -= 1 * delta;
 
 	// TODO update model method to allow for static models to avoid unneeded updates
