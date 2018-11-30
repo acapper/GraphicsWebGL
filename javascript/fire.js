@@ -107,8 +107,9 @@ class Fire {
 
 	update(delta) {
 		var pointsVectors = [];
+		var pos = vec3.create();
 		this.points.forEach(e => {
-			this.updatePoint(e, delta);
+			this.updatePoint(e, delta, pos);
 			pointsVectors = pointsVectors.concat(e.getPosition());
 		});
 
@@ -120,16 +121,14 @@ class Fire {
 		);
 	}
 
-	updatePoint(point, delta) {
-		var pos = point.getPosition();
+	updatePoint(point, delta, pos) {
+		pos = point.getPosition();
 		var dirToCenter = vec3.create();
 		vec3.sub(dirToCenter, pos, this.center);
 		dirToCenter[1] = 0;
 
-		if (vec3.length(dirToCenter) > Math.random() * 0.2) {
-			pos[0] -= delta * point.getCenterSpeed() * dirToCenter[0];
-			pos[2] -= delta * point.getCenterSpeed() * dirToCenter[2];
-		}
+		pos[0] -= delta * point.getCenterSpeed() * dirToCenter[0];
+		pos[2] -= delta * point.getCenterSpeed() * dirToCenter[2];
 
 		pos[1] += delta * point.getSpeed() * Math.sqrt(Math.random());
 		if (pos[1] > point.getMaxHeight()) {
