@@ -87,7 +87,7 @@ void main()
 			
 			// If light attenuation params are 0 set attenuation to 1
 			if(attenuation[i].x == 0.0){
-				att = 1.0;
+				att = 0.2;
 			}
 
 			// Apply shadow map bias
@@ -98,7 +98,7 @@ void main()
 			}
 
 			// In shadow and out
-			float ambientFactor = 0.5 * att;
+			float ambientFactor = 0.3 * att;
 			totalAmbient += mix(totalAmbient, diffuse_colour * vec4(lightCol[i], 1.0) * vec4(ambientFactor, ambientFactor, ambientFactor, 1.0), 1.0);
 		}
 	}
